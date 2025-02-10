@@ -74,3 +74,16 @@ def super_source_bfd(graph, neg_edges, beta, cycleDetection = False):
                 raise ValueError
  
     return distances1
+
+def subset_bfd(graph,subset, neg_edges, beta):
+
+    super_source = len(graph)
+    for v in subset:
+        graph[super_source].add((v,0))
+
+    distances = b_hop_sssp(super_source, graph, neg_edges, beta)
+    return distances
+
+def compute_reach(graph,S, neg_edges, h):
+    d = subset_bfd(graph,S,neg_edges,h)
+    return {v for v in graph if d[v] < 0}

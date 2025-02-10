@@ -3,7 +3,7 @@ import random as rand
 from collections import defaultdict
 from fineman.helper_functions import compute_reach
 
-def heavy_light_partition(graph, negative_subset, rho,c):
+def heavy_light_partition(graph, neg_edges, negative_subset, rho,c):
     n = len(graph)
     k_hat = len(negative_subset)
     count = defaultdict(int)
@@ -15,9 +15,9 @@ def heavy_light_partition(graph, negative_subset, rho,c):
     
     for _ in range(c*np.ceil(np.log(n))):
         U_prime = {v for v in negative_subset if rand.random() < sample_prob}
-        R = compute_reach(U_prime)
+        R = compute_reach(graph, U_prime, neg_edges, 1)
         for v in R:
-            count[v]
+            count[v] = count[v] + 1
         
     heavy_threshold = (c/2)*np.ceil(np.log(n))
     H = {u for u in negative_subset if count[u] >= heavy_threshold}

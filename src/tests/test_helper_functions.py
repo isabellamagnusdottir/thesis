@@ -54,7 +54,7 @@ def test_dijkstra_implementation(filename, expected):
     initial_dist = [np.inf]*(len(graph.keys()))
     initial_dist[0] = 0
 
-    dist = dijkstra(graph, neg_edges, initial_dist)
+    dist = dijkstra(graph, neg_edges, initial_dist, None)
     assert dist == expected
 
 
@@ -70,7 +70,7 @@ def test_bellman_ford_implementation(filename, expected):
     initial_dist = [np.inf]*(len(graph.keys()))
     initial_dist[0] = 0
 
-    dist = bellman_ford(graph, neg_edges, initial_dist)
+    dist = bellman_ford(graph, neg_edges, initial_dist, None)
     assert dist == expected
 
 
@@ -403,3 +403,129 @@ def test_reweight_path_given_price_function(price_function, expected):
 def test_reweight_cycle_given_price_function(price_function, expected):
     graph,_ = load_test_case(TESTDATA_FILEPATH+"negative_cycle_4.json")
     assert reweight_graph(graph,price_function) == expected
+
+@pytest.mark.parametrize("subset,expected", [
+    ([0,1],[0,0,1,-3,-2,-2]),
+    ([0,1,2],[0,0,0,-3,-3,-2]),
+    ([3,4],[np.inf,np.inf,np.inf,0,0,1]),
+    ([4],[np.inf,np.inf,np.inf,np.inf,0,1]),
+    ([1,3],[np.inf,0,np.inf,-3,np.inf,-2])
+])
+def test_subset_bfd_directed_acyclic_graph(subset, expected):
+    graph,neg_edges = load_test_case(TESTDATA_FILEPATH+"flow_dag_6_vertices.json")
+    dist = subset_bfd(graph,neg_edges,subset,1)
+    assert dist == expected
+
+@pytest.mark.parametrize("subset,expected", [
+    ([0],[0,np.inf,np.inf,np.inf]),
+    ([2],[np.inf,np.inf,0,np.inf]),
+    ([0,1,2,3],[0,0,0,0])
+])
+def test_subset_bfd_negative_cycle_with_no_hops(subset,expected):
+    graph,neg_edges = load_test_case(TESTDATA_FILEPATH+"negative_cycle_4.json")
+    dist = subset_bfd(graph,neg_edges,subset,0)
+    assert dist == expected
+
+@pytest.mark.parametrize("subset,expected", [
+    ([0],[0,-1,np.inf,np.inf]),
+    ([2],[np.inf,np.inf,0,-1]),
+    ([0,1,2,3],[-1,-1,-1,-1])
+])
+def test_subset_bfd_negative_cycle_with_one_hop(subset,expected):
+    graph,neg_edges = load_test_case(TESTDATA_FILEPATH+"negative_cycle_4.json")
+    dist = subset_bfd(graph,neg_edges,subset,1)
+    assert dist == expected
+
+@pytest.mark.parametrize("subset,expected,beta", [
+    ([0],[0,-1,np.inf,np.inf],1),
+    ([0],[0,-1,-2,np.inf],2),
+    ([0],[0,-1,-2,-3],3),
+    ([0],[-4,-1,-2,-3],4)
+])
+def test_subset_bfd_negative_cycle_with_many_hops(subset,expected,beta):
+    graph,neg_edges = load_test_case(TESTDATA_FILEPATH+"negative_cycle_4.json")
+    dist = subset_bfd(graph,neg_edges,subset,beta)
+    assert dist == expected
+
+@pytest.mark.parametrize("subset,expected", [
+    ([0],[0,1,2,3,4,5]),
+])
+def test_subset_bfd_for_only_pos_edges(subset,expected):
+    graph,neg_edges = load_test_case(TESTDATA_FILEPATH+"path_with_only_positive_edges.json")
+    dist = subset_bfd(graph,neg_edges,subset,0)
+    assert dist == expected
+
+@pytest.mark.parametrize("subset,expected,beta", [
+    ([0,1,2,3,4,5],set(),0),
+    ([0],{3,4,5},1),
+    ([3,4],set(),1)
+])
+def test_reach_directed_acyclic_graph(subset, expected,beta):
+    graph,neg_edges = load_test_case(TESTDATA_FILEPATH+"flow_dag_6_vertices.json")
+    reach = compute_reach(graph,neg_edges,subset,beta)
+    assert reach == expected
+
+@pytest.mark.parametrize("subset,expected,beta", [
+    ([0],{1},1),
+    ([0],{1,2},2),
+    ([0],{1,2,3},3),
+    ([0],{0,1,2,3},4),
+])
+def test_reach_on_negative_cycle(subset,expected,beta):
+    graph,neg_edges = load_test_case(TESTDATA_FILEPATH+"negative_cycle_4.json")
+    reach = compute_reach(graph,neg_edges,subset,beta)
+    assert reach == expected
+
+@pytest.mark.parametrize("subset,expected,beta", [
+    ([0,3],set(),0),
+    ([0],set(),0),
+    ([3],set(),0),
+    ([0],{1,2},1),
+    ([3],{4,5},1),
+    ([0,3],{1,2,4,5},1),
+])
+def test_reach_on_disconnected_graph(subset,expected,beta):
+    graph,neg_edges = load_test_case(TESTDATA_FILEPATH+"disconnected_triangles.json")
+    reach = compute_reach(graph,neg_edges,subset,beta)
+    assert reach == expected
+
+@pytest.mark.parametrize("subset,expected,beta", [
+    ([0],set(),10),
+])
+def test_reach_on_positive_path(subset,expected,beta):
+    graph,neg_edges = load_test_case(TESTDATA_FILEPATH+"path_with_only_positive_edges.json")
+    reach = compute_reach(graph,neg_edges,subset,beta)
+    assert reach == expected
+
+
+@pytest.mark.parametrize("subset,expected", [
+    ([0],[0,-1,np.inf,np.inf]),
+])
+def test_independent_set_negative_cycle_with_insufficient_hops(subset, expected):
+    graph,neg_edges = load_test_case(TESTDATA_FILEPATH+"negative_cycle_4.json")
+    actual = subset_bfd(graph,neg_edges,subset,1,subset,True)
+    assert actual == expected
+
+@pytest.mark.parametrize("subset", [
+    ([0]),
+])
+def test_independent_set_negative_cycle_detected(subset):
+    graph,neg_edges = load_test_case(TESTDATA_FILEPATH+"small_alternating_cycle.json")
+    with pytest.raises(ValueError):
+        subset_bfd(graph,neg_edges,subset,1,subset,True)
+
+@pytest.mark.parametrize("subset,expected", [
+    ([0],[ 0, 3, -6, 7, 5, 11, 8, 1, 2, 20, 4, 6, 11, 11])
+])
+def test_independent_set_negative_cycle_not_detected(subset,expected):
+    graph,neg_edges = load_test_case(TESTDATA_FILEPATH+"graph_with_neg_edges.json")
+    actual = subset_bfd(graph,neg_edges,subset,1,subset,True)
+    assert actual == expected
+
+@pytest.mark.parametrize("subset", [
+    ([0,1])
+])
+def test_independent_set_negative_cycle_not_detected_small(subset):
+    graph,neg_edges = load_test_case(TESTDATA_FILEPATH+"independent_set_cycle_2.json")
+    with pytest.raises(ValueError):
+        subset_bfd(graph,neg_edges,subset,1,subset,True)

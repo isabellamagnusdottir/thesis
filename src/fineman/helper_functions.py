@@ -47,6 +47,13 @@ def bfd(graph, neg_edges, dist: list, beta: int):
         dist = dijkstra(graph, neg_edges, dist)
     return dist
 
+def bfd_save_rounds(graph, neg_edges, dist: list, beta: int):
+    rounds = [dijkstra(graph, neg_edges, dist)]
+    for i in range(beta):
+        dist = bellman_ford(graph,neg_edges,rounds[i])
+        rounds.append(dijkstra(graph,neg_edges,dist))
+    return rounds
+
 def b_hop_sssp(source, graph: dict[int, dict[int, int]], neg_edges: set, beta):
     dist = [np.inf]*(len(graph.keys()))
     dist[source] = 0
@@ -76,17 +83,26 @@ def transpose_graph(graph: dict[int, dict[int, int]]):
 
     return t_graph, t_neg_edges
 
-# TODO: consider refactoring cycle detection
-def super_source_bfd(graph: dict[int, dict[int, int]], neg_edges: set, beta, cycleDetection = False):
 
+def _subset_bfd(graph, neg_edges, subset, beta):
     super_source = len(graph)
     graph[super_source] = {}
-    for v in range(0, len(graph)-1):
+    for v in subset:
         graph[super_source][v] = 0
 
-    distances1 = b_hop_sssp(super_source, graph, neg_edges, beta)
+    distances = b_hop_sssp(super_source, graph, neg_edges, beta)
+    del graph[super_source]
+    return distances
+
+def subset_bfd(graph, neg_edges, subset, beta):
+    return _subset_bfd(graph,neg_edges,subset,beta)[:-1]
+
+# TODO: consider refactoring cycle detection
+def super_source_bfd(graph: dict[int, dict[int, int]], neg_edges: set, beta, cycleDetection = False):
+    distances1 = _subset_bfd(graph,neg_edges,graph.keys(),beta)
     if cycleDetection:
-        distances2 = bfd(graph, neg_edges, distances1.copy(), beta)
+        distances2 = bellman_ford(graph, neg_edges, distances1.copy())
+        distances2 = dijkstra(graph, neg_edges, distances2)
         
         for v in graph.keys():
             if distances2[v] < distances1[v]:
@@ -133,15 +149,6 @@ def reweight_graph(graph, price_function):
             graph[u][v] = graph[u][v] + price_function[u] - price_function[v]
     return graph
 
-def subset_bfd(graph,subset, neg_edges, beta):
-
-    super_source = len(graph)
-    for v in subset:
-        graph[super_source].add((v,0))
-
-    distances = b_hop_sssp(super_source, graph, neg_edges, beta)
-    return distances
-
-def compute_reach(graph,S, neg_edges, h):
-    d = subset_bfd(graph,S,neg_edges,h)
-    return {v for v in graph if d[v] < 0}
+def compute_reach(graph,neg_edges,S,h):
+    d = subset_bfd(graph,neg_edges,S,h)
+    return {v for v in graph.keys() if d[v] < 0}

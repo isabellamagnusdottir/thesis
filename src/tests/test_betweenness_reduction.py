@@ -1,6 +1,7 @@
 import pytest
 from utils.load_test_case import load_test_case
-from fineman import betweenness_reduction, construct_h, betweenness, reweight_graph
+from fineman.helper_functions import betweenness, reweight_graph
+from fineman.betweenness_reduction import construct_h, betweenness_reduction
 import numpy as np
 
 TESTDATA_FILEPATH = "src/tests/test_data/graphs/"

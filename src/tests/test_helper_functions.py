@@ -394,7 +394,8 @@ def test_betweenness_set_grid_with_negative_edges(source,target,beta,expected):
 ])
 def test_reweight_path_given_price_function(price_function, expected):
     graph,_ = load_test_case(TESTDATA_FILEPATH+"path_with_only_positive_edges.json")
-    assert reweight_graph(graph,price_function) == expected
+
+    assert reweight_graph(graph,price_function)[0] == expected
 
 @pytest.mark.parametrize("price_function,expected", [
     ([-3,5,-7,-1],
@@ -402,4 +403,4 @@ def test_reweight_path_given_price_function(price_function, expected):
 ])
 def test_reweight_cycle_given_price_function(price_function, expected):
     graph,_ = load_test_case(TESTDATA_FILEPATH+"negative_cycle_4.json")
-    assert reweight_graph(graph,price_function) == expected
+    assert reweight_graph(graph,price_function)[0] == expected

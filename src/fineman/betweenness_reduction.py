@@ -1,16 +1,21 @@
-import numpy as np
 import random as rand
+
+import numpy as np
+
 from .helper_functions import b_hop_sssp, b_hop_stsp, super_source_bfd
+
 
 def betweenness_reduction(graph: dict[int, dict[int, int]], neg_edges, tau, beta, c):
     if (beta < 1) or (tau < 1) or (tau > len(graph)) or (c <= 1):
         raise ValueError
-    rand.seed(42)
+    #rand.seed()
 
     n = len(graph)
-    sample_size = c*tau*np.ceil(np.log(n))
-    T = rand.sample(graph.keys(), sample_size)
+    sample_size = int(c*tau*np.ceil(np.log(n)))
+    if sample_size > len(graph): raise ValueError
 
+    T = rand.sample(tuple(graph.keys()), sample_size)
+    
     distances = {}
     for x in T:
         distances[x] = (b_hop_sssp(x, graph, neg_edges, beta), b_hop_stsp(x, graph, beta))

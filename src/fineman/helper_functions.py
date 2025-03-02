@@ -125,10 +125,14 @@ def betweenness(source, target, graph, neg_edges, beta):
     return len(find_betweenness_set(source,target,graph,neg_edges,beta))
 
 def reweight_graph(graph, price_function):
+    neg_edges = set()
     # TODO: consider if it makes more sense to just hold the total set of edges for 
     # exactly the purpose of reweighting the graph in O(m) time (assuming m is the
     # number of edges in the graph), rather than the current O(n^2) time.
     for u in graph.keys(): 
         for v in graph[u].keys():
             graph[u][v] = graph[u][v] + price_function[u] - price_function[v]
-    return graph
+            if graph[u][v] < 0:
+                neg_edges.add((u,v))
+
+    return graph, neg_edges

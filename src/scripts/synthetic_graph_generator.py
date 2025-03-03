@@ -36,25 +36,25 @@ def graph_generator(graph_family: str, no_of_vertices: int, seed = None):
             return nx.gnp_random_graph(no_of_vertices, 0.66, seed = seed, directed=True)
 
 
-def get_weight(cap: int, weights, only_positives=True):
+def _get_weight(cap: int, weights, only_positives=True):
     if rand.choices([True, False], weights) or only_positives:
         return rand.randint(0, cap)
     return rand.randint(-cap, -1)
 
 
-def graph_to_json(graph: DiGraph, num, weights):
+def _graph_to_json(graph: DiGraph, num, weights):
     graph_data = {}
 
     for u,v in graph.edges.keys():
         if not str(u) in graph_data:
             graph_data[str(u)] = []
-        graph_data[str(u)].append([v, get_weight(num, weights)])
+        graph_data[str(u)].append([v, _get_weight(num, weights)])
 
     return graph_data
 
 
 def save_graph_json(graph: DiGraph, num, weights, filename: str):
-    json_data = graph_to_json(graph, num, weights)
+    json_data = _graph_to_json(graph, num, weights)
     with open("../tests/test_data/synthetic_graphs/" + filename + ".json", 'w') as f:
         json_str = json.dumps(json_data, indent=2)
         json_str = re.sub(r'\[\n\s*(\d+),\n\s*(\d+)\n\s*\]', r'[\1,\2]', json_str)

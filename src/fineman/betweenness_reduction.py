@@ -1,10 +1,10 @@
 from math import ceil, log
 import random as rand
-from .helper_functions import b_hop_sssp, b_hop_stsp, super_source_bfd
+from helper_functions import b_hop_sssp, b_hop_stsp, super_source_bfd
 
 def betweenness_reduction(graph: dict[int, dict[int, int]], neg_edges, tau, beta, c, seed = None):
     if (beta < 1) or (tau < 1) or (tau > len(graph)) or (c <= 1):
-        raise ValueError
+        raise ValueError("Invalid parameter")
 
     if seed is not None:
         rand.seed(seed)

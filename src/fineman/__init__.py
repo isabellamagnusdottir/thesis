@@ -1,5 +1,5 @@
-from .main import algorithm  # Import the main method
-from .betweenness_reduction import * # import subparts if needed
+from .elimination_algorithm import *
+from .betweenness_reduction import *
 from .helper_functions import *
 from .elimination_by_hop_reduction import *
 from .preprocessing import *

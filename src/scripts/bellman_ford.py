@@ -1,11 +1,9 @@
 from numpy import inf
+
 from utils.cycle_error import NegativeCycleError
 
 
-def main():
-    return standard_bellman_ford()
-
-def standard_bellman_ford(source:int, graph : dict[int, dict[int, int]]):
+def standard_bellman_ford(graph: dict[int, dict[int, int]], source: int):
     dist = [inf]*len(graph)
     dist[source] = 0
     for _ in range(len(graph)-1):
@@ -20,8 +18,4 @@ def standard_bellman_ford(source:int, graph : dict[int, dict[int, int]]):
                 # TODO: Consider implementing finding the negative cycle using
                 # a predecessor array.
                 raise NegativeCycleError
-            
     return dist
-
-if __name__ == "__main__":
-    main()

@@ -1,6 +1,9 @@
 import numpy as np
 from queue import PriorityQueue
 
+from utils import NegativeCycleError
+
+
 def dijkstra(graph: dict[int, dict[int, int]], neg_edges: set, dist: list, I_prime = None, parent = None, anc_in_I=None, save_source = False):
 
     pq = PriorityQueue()
@@ -106,24 +109,23 @@ def _subset_bfd(graph, neg_edges, subset, beta,I_prime=None,save_source=False):
     if save_source:
         for i in I_prime:
             if distances[i] < 0 and anc_in_I[i] == i:
-                raise ValueError("Error -- negative cycle detected (!)")
+                raise NegativeCycleError
     return distances
 
-def subset_bfd(graph, neg_edges, subset, beta,I_prime=None,save_source=False):
+def subset_bfd(graph, neg_edges, subset, beta: int, I_prime=None, save_source=False):
     return _subset_bfd(graph,neg_edges,subset,beta,I_prime,save_source)[:-1]
 
 # TODO: consider refactoring cycle detection
 def super_source_bfd(graph: dict[int, dict[int, int]], neg_edges: set, beta, cycleDetection = False):
     distances1 = _subset_bfd(graph,neg_edges,graph.keys(),beta)
     if cycleDetection:
-        distances2 = bellman_ford(graph, neg_edges, distances1.copy(),None)
-        distances2 = dijkstra(graph, neg_edges, distances2,None)
-        
+        distances2 = bellman_ford(graph, neg_edges, distances1.copy())
+        distances2 = dijkstra(graph, neg_edges, distances2)
+
         for v in graph.keys():
             if distances2[v] < distances1[v]:
-                # TODO: implement cycle error
-                raise ValueError
- 
+                raise NegativeCycleError
+
     return distances1[:-1]
 
 def get_set_of_neg_vertices(graph: dict[int, dict[int, int]]):

@@ -1,6 +1,6 @@
 from math import ceil
 from collections import deque
-from .helper_functions import get_set_of_neg_vertices, transpose_graph
+from fineman.helper_functions import get_set_of_neg_vertices, transpose_graph
 
 SCALAR_FOR_THRESHOLD = 4
 
@@ -15,8 +15,9 @@ def ensure_neg_vertices_has_degree_of_one(graph: dict[int, dict[int, int]]):
             old_neighbors = graph[vertex]
 
             # introduce new vertex
-            new_vertex = n + 1
-            most_neg_weight = min(weights for neighbors in graph.values() for weights in neighbors.values())
+            new_vertex = n
+            n = n + 1
+            most_neg_weight = min(weights for weights in graph[vertex].values())
             graph[vertex] = {new_vertex: most_neg_weight}
 
             # change weights on existing edges
@@ -43,7 +44,7 @@ def ensure_max_degree(graph: dict[int, dict[int, int]], threshold: int):
         # TODO: consider if it can be done without converting to list?
         outgoing_edges = list(graph[vertex].items())
 
-        new_vertex1, new_vertex2 = n+1, n+2
+        new_vertex1, new_vertex2 = n, n+1
         n = n + 2
 
         # half edges
@@ -89,5 +90,5 @@ def preprocess_graph(graph: dict[int, dict[int, int]], n, m):
     transposed_graph, _ = transpose_graph(transformed_graph)
     final_transposed_graph = ensure_max_degree(transposed_graph, threshold)
     
-    return transpose_graph(final_transposed_graph)[0]
+    return transpose_graph(final_transposed_graph)
 

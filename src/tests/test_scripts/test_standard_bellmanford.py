@@ -15,7 +15,7 @@ TESTDATA_FILEPATH = "src/tests/test_data/graphs/"
 ])
 def test_standard_bellman_ford_implementation_on_various_graphs(source,expected,filename):
     graph,_ = load_test_case(TESTDATA_FILEPATH+filename)
-    actual = standard_bellman_ford(source,graph)
+    actual = standard_bellman_ford(graph, source)
     print(actual)
     assert actual == expected
 
@@ -27,4 +27,4 @@ def test_standard_bellman_ford_implementation_for_negative_cycles(source,filenam
     graph,_ = load_test_case(TESTDATA_FILEPATH+filename)
     
     with pytest.raises(NegativeCycleError):
-        standard_bellman_ford(source,graph)
+        standard_bellman_ford(graph, source)

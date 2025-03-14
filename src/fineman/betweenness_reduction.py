@@ -1,16 +1,15 @@
 from math import ceil, log
 import random as rand
-from .helper_functions import b_hop_sssp, b_hop_stsp, super_source_bfd
+from fineman.helper_functions import b_hop_sssp, b_hop_stsp, super_source_bfd
 
 def betweenness_reduction(graph: dict[int, dict[int, int]], neg_edges, tau, beta, c, seed = None):
     if (beta < 1) or (tau < 1) or (tau > len(graph)) or (c <= 1):
-        raise ValueError
+        raise ValueError("Invalid parameter")
 
     if seed is not None:
         rand.seed(seed)
 
     n = len(graph)
-    # TODO: ask Thore how to handle these constants, do we floor or ceil?
     sample_size = int(c*tau*ceil(log(n)))
     if sample_size > len(graph): raise ValueError
 
@@ -38,6 +37,9 @@ def construct_h(graph: dict[int, dict[int, int]], T, distances):
             h_graph[v] = {}
 
         for t in T:
+            if v == t:
+                continue
+
             if t not in h_graph:
                 h_graph[t] = {}
 
@@ -47,6 +49,6 @@ def construct_h(graph: dict[int, dict[int, int]], T, distances):
 
             h_graph[v][t] = distances[t][1][v]
             if distances[t][1][v] < 0:
-                h_neg_edges.add((t,v))
+                h_neg_edges.add((v,t))
     
     return h_graph, h_neg_edges

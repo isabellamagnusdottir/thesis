@@ -82,7 +82,7 @@ def test_multiple_splits_on_hundred_vertex_graph(threshold, expected):
 ])
 def test_on_graph(filename, n, m):
     graph, _ = load_test_case(TESTDATA_FILEPATH + filename)
-    graph = preprocess_graph(graph, n, m)
+    graph, _ = preprocess_graph(graph, n, m)
     threshold = compute_threshold(n, m)
 
     assert all(len(neighbors) <= threshold for neighbors in graph.values())

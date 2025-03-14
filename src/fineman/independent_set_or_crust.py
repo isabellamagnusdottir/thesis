@@ -10,7 +10,7 @@ def find_is_or_crust(graph,neg_edges,negative_subset,c, c_prime, seed = None):
     if seed is not None: rand.seed(seed)
     k_hat = len(negative_subset)
     rho = k_hat**(1/3)
-    (H,L) = heavy_light_partition(graph,neg_edges,negative_subset,rho,c,seed)
+    (H,L) = heavy_light_partition(graph,neg_edges,negative_subset,rho,c)
     if H:
         y = rand.choice(tuple(H))
         #TODO: Consider if we want to strictly extract the transpose graph here as we will
@@ -18,7 +18,9 @@ def find_is_or_crust(graph,neg_edges,negative_subset,c, c_prime, seed = None):
         dist = b_hop_stsp(y,graph,1)
         U = {u for u in negative_subset if dist[u] < 0}
         if len(U) < (1/8)*k_hat*rho:
-            return find_is_or_crust(graph,neg_edges,negative_subset,c,(int(time.time()*1000)))
+            new_seed = (int(time.time()*1000))
+            print(f"Algorithm is reseeded -- new seed: {new_seed}")
+            return find_is_or_crust(graph, neg_edges, negative_subset, c, new_seed)
         else:
             return (y,U)
     else:

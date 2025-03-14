@@ -2,7 +2,7 @@ from math import ceil
 
 from bidict import bidict
 
-from fineman import super_source_bfd_save_rounds, super_source_bfd
+from fineman.helper_functions import super_source_bfd_save_rounds, super_source_bfd
 
 
 def elimination_of_r_remote_edges_by_hop_reduction(graph: dict[int, dict[int, int]], neg_edges: set, r):

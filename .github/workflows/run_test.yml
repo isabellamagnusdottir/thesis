@@ -26,6 +26,13 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Generating synthetic graphs
+        run: |
+          mkdir -p src/tests/test_data/synthetic_graphs
+          cd src/scripts
+          python synthetic_graph_generator.py
+          cd ../..
+
       - name: Run Tests
         run: |
           pytest

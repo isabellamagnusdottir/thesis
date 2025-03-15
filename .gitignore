@@ -174,3 +174,7 @@ cython_debug/
 .idea/
 
 notes/*
+
+src/tests/test_data/synthetic_graphs/*
+
+.DS_Store

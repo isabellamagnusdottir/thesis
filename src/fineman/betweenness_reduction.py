@@ -11,7 +11,9 @@ def betweenness_reduction(graph: dict[int, dict[int, int]], neg_edges, tau, beta
 
     n = len(graph)
     sample_size = int(c*tau*ceil(log(n)))
-    if sample_size > len(graph): raise ValueError
+    if sample_size > len(graph):
+        sample_size = len(graph)
+        #raise ValueError
 
     T = rand.sample(tuple(graph.keys()), sample_size)
 

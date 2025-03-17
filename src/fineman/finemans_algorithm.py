@@ -66,6 +66,8 @@ def fineman(graph: dict[int, dict[int, int]], source: int, seed = None):
     m = sum(len(neighbors) for neighbors in org_graph.values())
 
     graph, mapping = _find_connected_component_to_source(graph, source)
+    org_connected_component = graph.copy()
+
 
     graph, neg_edges = preprocess_graph(graph, org_n, m)
     n = len(graph.keys())
@@ -80,7 +82,7 @@ def fineman(graph: dict[int, dict[int, int]], source: int, seed = None):
         for _ in range(int(k**(2/3))):
             price_functions = elimination_algorithm(graph, neg_edges)
             for p in price_functions:
-                graph, neg_edges = reweight_graph(org_graph, p)
+                graph, neg_edges = reweight_graph(org_connected_component, p)
                 composed_price_function = [x + y for x, y in zip(composed_price_function, p)]
 
             if len(neg_edges) == 0: break

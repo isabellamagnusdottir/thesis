@@ -157,19 +157,36 @@ def find_betweenness_set(source, target, graph, neg_edges, beta):
 def betweenness(source, target, graph, neg_edges, beta):
     return len(find_betweenness_set(source,target,graph,neg_edges,beta))
 
+
 def reweight_graph(graph, price_function):
-    neg_edges = set()
-    # TODO: consider if it makes more sense to just hold the total set of edges for
-    # exactly the purpose of reweighting the graph in O(m) time (assuming m is the
-    # number of edges in the graph), rather than the current O(n^2) time.
-    for u in graph.keys(): 
-        for v in graph[u].keys():
-            graph[u][v] = graph[u][v] + price_function[u] - price_function[v]
+    new_graph = {}
+    new_neg_edges = set()
 
-            if graph[u][v] < 0:
-                neg_edges.add((u,v))
+    for u, edges in graph.items():
+        if u not in new_graph:
+            new_graph[u] = {}
+        for v, w in edges.items():
+            new_graph[u][v] = w + price_function[u] - price_function[v]
+            if new_graph[u][v] < 0:
+                new_neg_edges.add((u,v))
 
-    return graph, neg_edges
+    return new_graph, new_neg_edges
+
+
+# def reweight_graph(org_graph, price_function):
+#     neg_edges = set()
+#     graph = org_graph.copy()
+#     # TODO: consider if it makes more sense to just hold the total set of edges for
+#     # exactly the purpose of reweighting the graph in O(m) time (assuming m is the
+#     # number of edges in the graph), rather than the current O(n^2) time.
+#     for u in graph.keys():
+#         for v in graph[u].keys():
+#             graph[u][v] = graph[u][v] + price_function[u] - price_function[v]
+#
+#             if graph[u][v] < 0:
+#                 neg_edges.add((u,v))
+#
+#     return graph, neg_edges
 
 def compute_reach(graph,neg_edges,subset,h):
     d = subset_bfd(graph,neg_edges,subset,h)

@@ -173,7 +173,7 @@ def test_super_source_bfd_cycle_detection_on_graphs_without_neg_cycles(filename,
 ])
 def test_super_source_bfd_cycle_detection_on_graphs_with_neg_cycles(filename, beta):
     graph, neg_edges = load_test_case(TESTDATA_FILEPATH + filename)
-    with pytest.raises(ValueError):
+    with pytest.raises(NegativeCycleError):
         super_source_bfd(graph, neg_edges, beta, cycleDetection=True)
 
 
@@ -513,7 +513,7 @@ def test_independent_set_negative_cycle_with_insufficient_hops(subset, expected)
 ])
 def test_independent_set_negative_cycle_detected(subset):
     graph,neg_edges = load_test_case(TESTDATA_FILEPATH+"small_alternating_cycle.json")
-    with pytest.raises(ValueError):
+    with pytest.raises(NegativeCycleError):
         subset_bfd(graph,neg_edges,subset,1,subset,True)
 
 @pytest.mark.parametrize("subset,expected", [
@@ -529,5 +529,5 @@ def test_independent_set_negative_cycle_not_detected(subset,expected):
 ])
 def test_independent_set_negative_cycle_not_detected_small(subset):
     graph,neg_edges = load_test_case(TESTDATA_FILEPATH+"independent_set_cycle_2.json")
-    with pytest.raises(ValueError):
+    with pytest.raises(NegativeCycleError):
         subset_bfd(graph,neg_edges,subset,1,subset,True)

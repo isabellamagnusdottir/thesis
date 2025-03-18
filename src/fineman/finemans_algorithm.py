@@ -60,16 +60,13 @@ def fineman(graph: dict[int, dict[int, int]], source: int, seed = None):
 
     if seed is not None: rand.seed(seed)
 
-    # TODO: consider how to handle empty graphs
-    org_graph = graph.copy()
-    org_n = len(org_graph.keys())
-    m = sum(len(neighbors) for neighbors in org_graph.values())
+    org_n = len(graph.keys())
 
-    graph, mapping = _find_connected_component_to_source(graph, source)
-    org_connected_component = graph.copy()
+    graph, index_mapping = _find_connected_component_to_source(graph, source)
 
-
+    m = sum(len(neighbors) for neighbors in graph.values())
     graph, neg_edges = preprocess_graph(graph, org_n, m)
+
     n = len(graph.keys())
     neg_edges = {(u,v) for u, edges in graph.items() for v, w in edges.items() if w < 0}
 
@@ -81,12 +78,14 @@ def fineman(graph: dict[int, dict[int, int]], source: int, seed = None):
 
         for _ in range(int(k**(2/3))):
             price_functions = elimination_algorithm(graph, neg_edges)
+            # TODO: make the elimination algorithm return a composed pricefunction
             for p in price_functions:
-                graph, neg_edges = reweight_graph(org_connected_component, p)
+                graph, neg_edges = reweight_graph(graph, p)
                 composed_price_function = [x + y for x, y in zip(composed_price_function, p)]
 
             if len(neg_edges) == 0: break
 
-    dist = dijkstra(graph, source)
+    distances = dijkstra(graph, index_mapping[source])
+    converted_distances = _reverse_price_functions_on_distances(index_mapping[source], distances, composed_price_function)
 
-    return _remapping_distances(_reverse_price_functions_on_distances(source, dist, composed_price_function), org_n, mapping)
+    return _remapping_distances(converted_distances, org_n, index_mapping)

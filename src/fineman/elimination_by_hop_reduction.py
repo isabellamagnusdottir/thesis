@@ -4,7 +4,7 @@ from bidict import bidict
 
 from fineman.helper_functions import super_source_bfd_save_rounds, super_source_bfd
 
-
+#TODO: rename neg_edges to subset something...
 def elimination_of_r_remote_edges_by_hop_reduction(graph: dict[int, dict[int, int]], neg_edges: set, r):
 
     k_hat = len(neg_edges)
@@ -12,13 +12,17 @@ def elimination_of_r_remote_edges_by_hop_reduction(graph: dict[int, dict[int, in
 
     R_set = {v for v in graph if dists[r][v] < 0 for v in graph.keys()}
 
-    h, mapping = construct_h(graph, neg_edges, dists, R_set, r)
-    h_neg_edges = {(u,v) for u, edges in h.items() for v, weight in edges.items() if weight < 0}
+    h, h_neg_edges, mapping = construct_h(graph, neg_edges, dists, R_set, r)
 
     kappa = ceil(k_hat / r)
 
-    distances = super_source_bfd(h, h_neg_edges, kappa, cycleDetection=True)
-    return distances
+    h_distances = super_source_bfd(h, h_neg_edges, kappa, cycleDetection=True)
+
+    g_distances = [0] * len(graph)
+    for v in graph.keys():
+        g_distances[v] = h_distances[mapping[f"{v}_0"]]
+
+    return g_distances
 
 
 
@@ -39,59 +43,72 @@ def construct_h(graph, neg_edges, dists, R_set, r):
 
     # TODO: needs to be done in a better way
     all_edges = {(u,v) for u, edge in graph.items() for v in edge.keys()}
+    h_neg_edges = set()
 
-    for u in graph:
-        for v in graph:
-
-            if (u,v) in all_edges:
-
-                # case 1
-                if (u,v) not in neg_edges and u in R_set and v in R_set:
-                    for j in range(r+1):
-                        h[mapping[f"{u}_{j}"]][mapping[f"{v}_{j}"]] = _compute_weight(j, u, j, v, graph, dists)
-
-                # case 2
-                if (u,v) in neg_edges and u in R_set and v in R_set:
-                    for j in range(r):
-                        h[mapping[f"{u}_{j}"]][mapping[f"{v}_{j+1}"]] = _compute_weight(j, u, j+1, v, graph, dists)
-
-                # case 3
-                if (u,v) not in neg_edges and u in R_set and v not in R_set:
-                    for j in range(r+1):
-                        h[mapping[f"{u}_{j}"]][mapping[f"{v}_0"]] = _compute_weight(j, u, 0, v, graph, dists)
-
-                # case 4
-                if (u,v) in neg_edges and u in R_set and v not in R_set:
-                    for j in range(r):
-                        h[mapping[f"{u}_{j}"]][mapping[f"{v}_0"]] = _compute_weight(j, u, 0, v, graph, dists)
-
-                # case 5
-                if (u,v) not in neg_edges and u not in R_set and v in R_set:
-                    h[mapping[f"{u}_0"]][mapping[f"{v}_0"]] = _compute_weight(0, u, 0, v, graph, dists)
-
-                # case 6
-                if (u,v) in neg_edges and u not in R_set and v in R_set:
-                    h[mapping[f"{u}_0"]][mapping[f"{v}_1"]] = _compute_weight(0, u, 1, v, graph, dists)
-
-                # case 7
-                if (u,v) not in neg_edges and u not in R_set and v not in R_set:
-                    h[mapping[f"{u}_0"]][mapping[f"{v}_0"]] = _compute_weight(0, u, 0, v, graph, dists)
-
-                #case 8
-                if (u,v) in neg_edges and u not in R_set and v not in R_set:
-                    h[mapping[f"{u}_0"]][mapping[f"{v}_0"]] = _compute_weight(0, u, 0, v, graph, dists)
-
-        # case 9
-        if u in R_set:
+    for (u,v) in all_edges:
+        # case 1
+        if (u,v) not in neg_edges and u in R_set and v in R_set:
             for j in range(r+1):
-                if j == r:
-                    h[mapping[f"{u}_{j}"]][mapping[f"{u}_0"]] = _compute_weight(j, u, 0, u, graph, dists)
-                else:
-                    h[mapping[f"{u}_{j}"]][mapping[f"{u}_{j+1}"]] = _compute_weight(j, u, j+1, u, graph, dists)
+                h[mapping[f"{u}_{j}"]][mapping[f"{v}_{j}"]] = _compute_weight(j, u, j, v, graph, dists)
+                _construct_neg_edges_set(h, h_neg_edges, mapping[f"{u}_{j}"], mapping[f"{v}_{j}"])
 
-    return h, mapping
+        # case 2
+        if (u,v) in neg_edges and u in R_set and v in R_set:
+            for j in range(r):
+                h[mapping[f"{u}_{j}"]][mapping[f"{v}_{j+1}"]] = _compute_weight(j, u, j+1, v, graph, dists)
+                _construct_neg_edges_set(h, h_neg_edges, mapping[f"{u}_{j}"], mapping[f"{v}_{j+1}"])
+
+        # case 3
+        if (u,v) not in neg_edges and u in R_set and v not in R_set:
+            for j in range(r+1):
+                h[mapping[f"{u}_{j}"]][mapping[f"{v}_0"]] = _compute_weight(j, u, 0, v, graph, dists)
+                _construct_neg_edges_set(h, h_neg_edges, mapping[f"{u}_{j}"], mapping[f"{v}_0"])
+
+        # case 4
+        if (u,v) in neg_edges and u in R_set and v not in R_set:
+            for j in range(r):
+                h[mapping[f"{u}_{j}"]][mapping[f"{v}_0"]] = _compute_weight(j, u, 0, v, graph, dists)
+                _construct_neg_edges_set(h, h_neg_edges, mapping[f"{u}_{j}"], mapping[f"{v}_0"])
+
+        # case 5
+        if (u,v) not in neg_edges and u not in R_set and v in R_set:
+            h[mapping[f"{u}_0"]][mapping[f"{v}_0"]] = _compute_weight(0, u, 0, v, graph, dists)
+            _construct_neg_edges_set(h, h_neg_edges, mapping[f"{u}_0"], mapping[f"{v}_0"])
+
+        # case 6
+        if (u,v) in neg_edges and u not in R_set and v in R_set:
+            h[mapping[f"{u}_0"]][mapping[f"{v}_1"]] = _compute_weight(0, u, 1, v, graph, dists)
+            _construct_neg_edges_set(h, h_neg_edges, mapping[f"{u}_0"], mapping[f"{v}_1"])
+
+        # case 7
+        if (u,v) not in neg_edges and u not in R_set and v not in R_set:
+            h[mapping[f"{u}_0"]][mapping[f"{v}_0"]] = _compute_weight(0, u, 0, v, graph, dists)
+            _construct_neg_edges_set(h, h_neg_edges, mapping[f"{u}_0"], mapping[f"{v}_0"])
+
+        #case 8
+        if (u,v) in neg_edges and u not in R_set and v not in R_set:
+            h[mapping[f"{u}_0"]][mapping[f"{v}_0"]] = _compute_weight(0, u, 0, v, graph, dists)
+            _construct_neg_edges_set(h, h_neg_edges, mapping[f"{u}_0"], mapping[f"{v}_0"])
+
+
+    for u in R_set:
+        # case 9
+        for j in range(r+1):
+            if j == r:
+                h[mapping[f"{u}_{j}"]][mapping[f"{u}_0"]] = _compute_weight(j, u, 0, u, graph, dists)
+                _construct_neg_edges_set(h, h_neg_edges, mapping[f"{u}_{j}"], mapping[f"{u}_0"])
+            else:
+                h[mapping[f"{u}_{j}"]][mapping[f"{u}_{j+1}"]] = _compute_weight(j, u, j+1, u, graph, dists)
+                _construct_neg_edges_set(h, h_neg_edges, mapping[f"{u}_{j}"], mapping[f"{u}_{j+1}"])
+
+    return h, h_neg_edges, mapping
 
 
 def _compute_weight(i, u, j, v, graph, dists):
     weight = 0 if u == v else graph[u][v]
     return weight + (dists[i][u]) - (dists[j][v])
+
+
+def _construct_neg_edges_set(graph, cur_set, u, v):
+    if graph[u][v] < 0:
+        cur_set.add((u,v))

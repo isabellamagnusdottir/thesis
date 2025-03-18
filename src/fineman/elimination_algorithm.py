@@ -16,9 +16,9 @@ def _compute_price_function_to_eliminate_independent_set(graph, independent_set)
 def _compute_price_function_to_make_U_r_remote(graph, neg_edges, negative_sandwich, beta):
 
     (x,U,y) = negative_sandwich
-    phi = [] * len(graph)
+    phi = [0] * len(graph)
 
-    dists_from_x= b_hop_sssp(x, graph, neg_edges, beta)
+    dists_from_x = b_hop_sssp(x, graph, neg_edges, beta)
     dists_to_y = b_hop_stsp(y, graph, beta)
 
     for v in graph.keys():
@@ -26,7 +26,7 @@ def _compute_price_function_to_make_U_r_remote(graph, neg_edges, negative_sandwi
 
     return phi
 
-
+#TODO: rename function
 def _subgraph_with_out_subset(graph: dict[int, dict[int, int]], out_set: set):
     new_graph = {}
     new_neg_edges = set()
@@ -35,7 +35,7 @@ def _subgraph_with_out_subset(graph: dict[int, dict[int, int]], out_set: set):
         if u not in new_graph:
             new_graph[u] = {}
         for v, w in edge.items():
-            if v not in out_set:
+            if (u,v) in out_set or w >= 0:
                 new_graph[u][v] = w
                 if w < 0:
                     new_neg_edges.add((u,v))
@@ -44,11 +44,7 @@ def _subgraph_with_out_subset(graph: dict[int, dict[int, int]], out_set: set):
 
 
 def elimination_algorithm(org_graph, org_neg_edges, seed = None):
-
     n = len(org_graph.keys())
-
-    # TODO: probably not efficient to compute these each time.
-    neg_vertices = {u for u,_ in org_neg_edges}
 
     c = 3
     k = len(org_neg_edges)
@@ -57,34 +53,39 @@ def elimination_algorithm(org_graph, org_neg_edges, seed = None):
     phi_1 = betweenness_reduction(org_graph, org_neg_edges, tau=r, beta=r+1, c=c)
     graph_phi1, neg_edges = reweight_graph(org_graph, phi_1)
 
-    match find_is_or_crust(graph_phi1, neg_edges, neg_vertices, c, c+1):
-        case (y,U):
+    if len(neg_edges) == 0: return [phi_1]
+
+    U_0 = {u for u, _ in neg_edges}
+
+    match find_is_or_crust(graph_phi1, neg_edges, U_0, c, c+1):
+        case (y,U_1):
             print("First half of negative sandwich found")
 
+            # TODO: refactor to keep track of global transposed graph
             graph_T, neg_edges_T = transpose_graph(graph_phi1)
-            match find_is_or_crust(graph_T, neg_edges_T, U, c, c+1):
-                case (x,U):
+            match find_is_or_crust(graph_T, neg_edges_T, U_1, c, c+1):
+                case (x,U_2):
                     print("Second half of negative sandwich found")
-                    while len(U) > k**(1/3):
-                        U.pop()
-                    phi_2 = _compute_price_function_to_make_U_r_remote(graph_phi1, neg_edges, (x,U,y), beta=r+1)
+                    while len(U_2) > k**(1/3):
+                        U_2.pop()
+                    phi_2 = _compute_price_function_to_make_U_r_remote(graph_phi1, neg_edges, (x,U_2,y), beta=r+1)
 
                     graph_phi1_phi2, neg_edges = reweight_graph(graph_phi1, phi_2)
 
-                    if len(compute_reach(graph_phi1_phi2, neg_edges, U, r)) > n / r:
+                    if len(compute_reach(graph_phi1_phi2, neg_edges, U_2, r)) > n / r:
                         return elimination_algorithm(org_graph, org_neg_edges)
 
-                    out_U = {(u, v) for u in U for v in org_graph[u].keys()}
-                    graph_phi1_phi2_out_U, neg_edges = _subgraph_with_out_subset(graph_phi1_phi2, out_U)
-                    phi = elimination_of_r_remote_edges_by_hop_reduction(graph_phi1_phi2_out_U, neg_edges, r)
+                    out_U_2 = {(u, v) for u in U_2 for v in org_graph[u].keys()}
+                    graph_phi1_phi2_out_U_2, neg_edges = _subgraph_with_out_subset(graph_phi1_phi2, out_U_2)
+                    phi = elimination_of_r_remote_edges_by_hop_reduction(graph_phi1_phi2_out_U_2, neg_edges, r)
 
                     return [phi, phi_1, phi_2]
 
                 case I:
                     print("Independent set found")
-                    return [phi_1, _compute_price_function_to_eliminate_independent_set(graph_phi1, I)]
+                    return [_compute_price_function_to_eliminate_independent_set(graph_phi1, I), phi_1]
 
 
         case I:
             print("Independent set found")
-            return [phi_1, _compute_price_function_to_eliminate_independent_set(graph_phi1, I)]
+            return [_compute_price_function_to_eliminate_independent_set(graph_phi1, I), phi_1]

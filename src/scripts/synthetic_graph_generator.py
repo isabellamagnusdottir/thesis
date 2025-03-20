@@ -136,7 +136,6 @@ def generate_multiple_watts_strogatz_graphs(no_of_vertices, ratios, ks, ps):
                 for p in ps:
                     single_graph_generator("watts-strogatz", num, r, k=k, p=p)
 
-
 def main():
     # PATHS, CYCLES, TREES, COMPLETE GRAPHS
     families_of_graphs = ["path", "cycle", "random-tree", "complete"]

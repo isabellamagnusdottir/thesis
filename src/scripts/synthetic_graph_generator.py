@@ -64,12 +64,16 @@ def save_graph_json(graph: DiGraph, num, weights, filename: str):
 def _generate_random_graphs(seed = None):
     no_of_vertices = [10, 50, 100, 200, 500, 750, 1000]
     ratios = [[0.66, 0.34], [0.5, 0.5], [0.8, 0.2], [0.9, 0.1]]
-    edges_scalar = [1,3,5,9]
+    edges_scalar = [3, 5, 6, 9]
 
     for num in no_of_vertices:
         for scalar in edges_scalar:
             for ratio in ratios:
                 graph = nx.gnm_random_graph(num, scalar*num, seed=seed, directed=True)
+
+                while not nx.is_weakly_connected(graph):
+                    graph = nx.gnm_random_graph(num, scalar*num, seed=seed, directed=True)
+
                 filename = f"random_{num}_{scalar * num}_{str(ratio[1]).replace(".", "")}"
                 save_graph_json(graph, num, ratio, filename)
 
@@ -77,7 +81,7 @@ def _generate_random_graphs(seed = None):
 def _generate_families_of_graphs(seed = None):
     no_of_vertices = [10, 50, 100, 200, 500, 750, 1000]
     families_of_graphs = ["path", "cycle", "random-tree", "complete"]
-    ratios = [[0.66, 0.34], [0.5, 0.5], [0.8, 0.2], [0.9, 0.1]]
+    ratios = [[0.9, 0.1], [0.8, 0.2], [0.66, 0.34], [0.5, 0.5], [0.2, 0.8]]
 
     for f in families_of_graphs:
         for v in no_of_vertices:

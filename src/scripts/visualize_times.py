@@ -9,7 +9,6 @@ import argparse
 DEFAULT_PATH = "empiric_data/"
 
 def visualize_timings(csvfile_path:Path):
-    n_values = np.logspace(1, 6, 5)
     family_times = {}
 
     name = ""
@@ -21,8 +20,11 @@ def visualize_timings(csvfile_path:Path):
                 name = row['graph_family']
                 k = row['k']
                 family_times[(name,k)] = []
-            family_times[(name,k)].append((row['n'],row['fineman_time'],row['bellman_ford_time']))
+            family_times[(name,k)].append((int(row['n']),float(row['fineman_time']),float(row['bellman_ford_time'])))
+    for key,info in family_times.items():
+        family_times[key] = sorted(info, key=lambda x: x[0])
 
+    
     for (graph_type,k),values in family_times.items():
         x_values = np.array([int(v[0]) for v in values])
         fineman_reference = x_values ** (8/9)
@@ -33,8 +35,12 @@ def visualize_timings(csvfile_path:Path):
         plt.loglog(x_values, [float(v[1]) for v in values], 'mo-', linewidth=2, markersize=8, label='Fineman Running time')
         plt.loglog(x_values, [float(v[2]) for v in values], 'bo-', linewidth=2, markersize=8, label='Bellman-Ford Running time')
 
-        plt.loglog(x_values, fineman_reference, 'r--', linewidth=2, label=r'$n^{8/9}$')
-        plt.loglog(x_values, hopeful_reference, 'g--', linewidth=2, label=r'$n^{7/9}$')
+        # plt.loglog(x_values, fineman_reference, 'r--', linewidth=2, label=r'$mn^{8/9}$')
+        # plt.loglog(x_values, hopeful_reference, 'g--', linewidth=2, label=r'$mn^{7/9}$')
+
+        ########### MAKE THE ROUNDS RUN SEPARATELY ON THE SAME GRAPHS USING METHODS SO THAT THEY DONT INTERFERE!
+        ########### OR SMTHING -> Maybe do generate a set of 25 graphs that they all just run
+        ########### MAKE THEM CHECK RESULTS SO WE ENSURE SIMILAR SHORTEST PATHS!!!!!!!!!
 
         # Add labels and title
         if graph_type != 'grid':
@@ -64,3 +70,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

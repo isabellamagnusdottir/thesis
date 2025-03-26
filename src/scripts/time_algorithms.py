@@ -20,7 +20,7 @@ def time_algorithms():
     data = []
     # files =  os.listdir(GRAPHS_PATH)
     files = [filename for filename in os.listdir(GRAPHS_PATH)
-                                      if filename.startswith(("grid"))]
+                                      if filename.startswith(("path"))]
     
     name = f"{datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")}" + "_SSSP_comparison"
     file_path = Path.cwd() / "empiric_data" / f"{name}.csv"
@@ -36,7 +36,7 @@ def time_algorithms():
         else:
             n = int(graph_info[1])
 
-        k = float((graph_info[3][0]+'.'+graph_info[3][1:])) if len(graph_info[3]) > 1 else 0.0
+        k = float((graph_info[3][0]+'.'+graph_info[3][1:]))
     
         # 1. Run algorithm on 12 (only average on 10 last) unique graphs
         # 2. if the algorithm experiences a negatice cycle error -> discard time and rerun on new graph
@@ -45,32 +45,23 @@ def time_algorithms():
 
         #compute time for bellman-ford
         bellmanford_times = []
-        count = 0
-        while count <= 12:
-            try:
-                start_time = time.time()
-                standard_bellman_ford(graph,0)
-                end_time = time.time()
-                bellmanford_times.append(end_time-start_time)
-                new_path = generate_single_graph(graph_info[0],int(n),int(graph_info[2]),[1.0-k,k])
-                graph,_ = load_test_case(Path(GRAPHS_PATH+new_path+".json"))
-                count += 1
-            except NegativeCycleError: 
-                new_path = generate_single_graph(graph_info[0],int(n),int(graph_info[2]),[1.0-k,k])
-                graph,_ = load_test_case(Path(GRAPHS_PATH+new_path+".json"))
-                continue
-        bellman_ford_time = np.mean(bellmanford_times[2:])
-
-    
-        # Compute time for fineman
         fineman_times = []
         count = 0
-        while count <= 12:
+        while count <= 110:
             try:
-                start_time = time.time()
-                fineman(graph,0)
-                end_time = time.time()
-                fineman_times.append(end_time-start_time)
+                bford_start_time = time.time()
+                result1 = standard_bellman_ford(graph,0)
+                bford_end_time = time.time()
+
+                fineman_start_time = time.time()
+                result2 = fineman(graph,0)
+                fineman_end_time = time.time()
+
+                assert result1 == result2
+
+                bellmanford_times.append(bford_end_time-bford_start_time)
+                fineman_times.append(fineman_end_time-fineman_start_time)
+
                 new_path = generate_single_graph(graph_info[0],int(n),int(graph_info[2]),[1.0-k,k])
                 graph,_ = load_test_case(Path(GRAPHS_PATH+new_path+".json"))
                 count += 1
@@ -78,17 +69,11 @@ def time_algorithms():
                 new_path = generate_single_graph(graph_info[0],int(n),int(graph_info[2]),[1.0-k,k])
                 graph,_ = load_test_case(Path(GRAPHS_PATH+new_path+".json"))
                 continue
-        fineman_time = np.mean(fineman_times[2:])
+        bellman_ford_time = np.mean(bellmanford_times[10:])
+        fineman_time = np.mean(fineman_times[10:])
 
-        # except NegativeCycleError:
-        #     # if k == 0:
-        #     #     generate_single_graph(graph_info[0],int(n),int(graph_info[2]),[1.0,0.0])
-        #     #     continue
-        #     new_path = generate_single_graph(graph_info[0],int(n),int(graph_info[2]),[1.0-k,k])
-        #     files.append(new_path+".json")
-        #     continue
 
-        #agreed upon file name format:
+        #  agreed upon file name format:
         # how to detect errors? make them both assert that they found an error for the same graphs?
         # make numbers very low to indicate error? 
         data.append({'file':file_path, 'graph_family': graph_info[0],

@@ -54,7 +54,9 @@ def visualize_timings(csvfile_path:Path):
         plt.legend(fontsize=12)
 
         plt.tight_layout()
-        plt.show()
+        if not os.path.isdir(Path.cwd() / "plots"):
+            os.makedirs(Path.cwd() / "plots")
+        plt.savefig(Path("plots/"+f"fineman_bford_comparison_{graph_type}_{1-float(k)}-{k}.png"))
 
 def main():
     parser = argparse.ArgumentParser()

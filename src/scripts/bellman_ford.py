@@ -15,7 +15,5 @@ def standard_bellman_ford(graph: dict[int, dict[int, int]], source: int):
     for u,neighborhood in graph.items():
         for v in neighborhood.keys():
             if dist[u] + graph[u][v] < dist[v]:
-                # TODO: Consider implementing finding the negative cycle using
-                # a predecessor array.
                 raise NegativeCycleError
     return dist

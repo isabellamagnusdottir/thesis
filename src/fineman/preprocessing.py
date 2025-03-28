@@ -1,6 +1,7 @@
 from math import ceil
 from collections import deque
 from fineman.helper_functions import get_set_of_neg_vertices, transpose_graph
+from utils.threshold_error import InvalidThresholdError
 
 SCALAR_FOR_THRESHOLD = 4
 
@@ -41,38 +42,40 @@ def ensure_max_degree(graph: dict[int, dict[int, int]], threshold: int):
     while split_queue:
         vertex = split_queue.popleft()
 
-        # TODO: consider if it can be done without converting to list?
-        outgoing_edges = list(graph[vertex].items())
-
         new_vertex1, new_vertex2 = n, n+1
         n = n + 2
+        graph[new_vertex1] = {}
+        graph[new_vertex2] = {}
+
+        mid = ceil(len(graph[vertex])/2)
 
         # half edges
-        mid = ceil(len(outgoing_edges)/2)
-        edges1 = outgoing_edges[:mid]
-        edges2 = outgoing_edges[mid:]
+        count = 0
+        for v, w in graph[vertex].items():
+            if count < mid:
+                graph[new_vertex1][v] = w
+            else:
+                graph[new_vertex2][v] = w
+            count += 1
 
-        graph[new_vertex1] = {neighbor: weight for neighbor, weight in edges1}
-        graph[new_vertex2] = {neighbor: weight for neighbor, weight in edges2}
 
         graph[vertex] = {new_vertex1:0, new_vertex2:0}
 
         # check whether new vertices violate the degree threshold
         if len(graph[new_vertex1]) > threshold:
             split_queue.append(new_vertex1)
-        if len(graph[new_vertex2]) > threshold:
-            split_queue.append(new_vertex2)
-        # TODO: consider if it even happens that the first one does not, but the second does?
+
+            if len(graph[new_vertex2]) > threshold:
+                split_queue.append(new_vertex2)
 
     return graph
 
 
 def compute_threshold(n: int, m: int):
     threshold = ceil((m / n)) * SCALAR_FOR_THRESHOLD
-    
-    # TODO: implement InvalidThresholdError
+
     if threshold <= 2:
-        raise ValueError
+        raise InvalidThresholdError
     
     return threshold
 

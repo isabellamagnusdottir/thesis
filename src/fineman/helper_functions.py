@@ -28,22 +28,20 @@ def dijkstra(graph: dict[int, dict[int, int]], neg_edges: set, dist: list, I_pri
     return dist
 
 
-# hold styr på hvorvidt vægten, som står der nu, kommer fra den nuværende bellman-ford eller fra tidligere
 def bellman_ford(graph : dict[int, dict[int, int]], neg_edges: set, dist: list, I_prime = None, anc_in_I = None, parent = None, save_source = False):
 
     old_dist = dist.copy()
-    # TODO: consider it a dict from vertex to bool is better? depends on the ratio between neg_edges and all edges
-    used_hop_in_round = [False] * (len(graph.keys()))
+    used_hop_in_round = set()
 
     for (u,v) in neg_edges:
         alt_dist = dist[u] + graph[u][v]
 
-        if used_hop_in_round[u]:
+        if u in used_hop_in_round:
             alt_dist = old_dist[u] + graph[u][v]
 
         if alt_dist < dist[v]:
             dist[v] = alt_dist
-            used_hop_in_round[v] = True
+            used_hop_in_round.add(v)
 
             if save_source:
                 _compute_ancestor_parent(parent, anc_in_I, I_prime, u,v, len(graph))
@@ -116,7 +114,7 @@ def _subset_bfd(graph, neg_edges, subset, beta,I_prime=None,save_source=False):
 def subset_bfd(graph, neg_edges, subset, beta: int, I_prime=None, save_source=False):
     return _subset_bfd(graph,neg_edges,subset,beta,I_prime,save_source)[:-1]
 
-# TODO: consider refactoring cycle detection
+
 def super_source_bfd(graph: dict[int, dict[int, int]], neg_edges: set, beta, cycleDetection = False):
     distances1 = _subset_bfd(graph,neg_edges,graph.keys(),beta)
     if cycleDetection:
@@ -139,12 +137,6 @@ def get_set_of_neg_vertices(graph: dict[int, dict[int, int]]):
     
     return neg_vertices
 
-# TODO: Find better name for mid
-# Rethink if this is both the correct way to do it and if this is even neccessary?
-def compute_throughdist(source, mid, target, graph, neg_edges, beta):
-    dist1 = b_hop_sssp(source,graph,neg_edges,beta)
-    dist2 = b_hop_stsp(target,graph,beta)
-    return dist1[mid]+dist2[mid]
 
 def find_betweenness_set(source, target, graph, neg_edges, beta):
     dist1 = b_hop_sssp(source,graph,neg_edges,beta)

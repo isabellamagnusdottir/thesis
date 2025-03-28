@@ -176,73 +176,6 @@ def test_super_source_bfd_cycle_detection_on_graphs_with_neg_cycles(filename, be
         super_source_bfd(graph, neg_edges, beta, cycleDetection=True)
 
 
-@pytest.mark.parametrize("source,mid,target,beta,expected", [
-    (0,1,7,0,np.inf),
-    (0,2,7,0,np.inf),
-    (0,3,7,0,np.inf),
-    (0,1,7,1,-1),
-    (0,2,7,1,-4),
-    (0,3,7,1,-5),
-    (0,4,7,1,-1),
-    (0,5,7,1,-4),
-    (0,6,7,1,-5),
-    (0,6,7,2,-5)
-])
-def test_through_dist_small_flow_dag(source,mid,target,beta,expected):
-    graph,neg_edges = load_test_case(TESTDATA_FILEPATH+"small_flow_dag.json")
-    actual = compute_throughdist(source,mid,target,graph,neg_edges,beta)
-    assert actual == expected
-
-
-@pytest.mark.parametrize("source,mid,target,beta,expected", [
-   (0,1,0,0,np.inf),
-   (0,1,0,1,np.inf),
-   (0,1,0,2,12),
-   (0,2,5,1,np.inf),
-   (0,2,5,2,5)
-])
-def test_through_dist_small_pos_cycle(source,mid,target,beta,expected):
-    graph,neg_edges = load_test_case(TESTDATA_FILEPATH+"small_pos_cycle.json")
-    actual = compute_throughdist(source,mid,target,graph,neg_edges,beta)
-    assert actual == expected
-
-
-@pytest.mark.parametrize("source,mid,target,beta,expected", [
-   (0,1,0,0,np.inf),
-   (0,1,0,1,np.inf),
-   (0,1,0,2,np.inf),
-   (0,1,0,3,np.inf),
-   (0,1,0,4,np.inf),
-   (0,1,0,5,-26),
-   (0,3,0,2,np.inf),
-   (0,3,0,3,-26)
-])
-def test_through_dist_small_negative_cycle(source,mid,target,beta,expected):
-    graph,neg_edges = load_test_case(TESTDATA_FILEPATH+"negative_cycle_6.json")
-    actual = compute_throughdist(source,mid,target,graph,neg_edges,beta)
-    assert actual == expected
-
-@pytest.mark.parametrize("source,mid,target,beta,expected", [
-   (0,2,5,0,np.inf),
-   (0,2,5,1,np.inf),
-   (0,2,5,2,np.inf),
-   (0,2,5,3,-5)
-])
-def test_through_dist_small_negative_path(source,mid,target,beta,expected):
-    graph,neg_edges = load_test_case(TESTDATA_FILEPATH+"path_with_only_neg_edges.json")
-    actual = compute_throughdist(source,mid,target,graph,neg_edges,beta)
-    assert actual == expected
-
-
-@pytest.mark.parametrize("source,mid,target,beta,expected", [
-   (0,2,5,0,5)
-])
-def test_through_dist_small_positive_path(source,mid,target,beta,expected):
-    graph,neg_edges = load_test_case(TESTDATA_FILEPATH+"path_with_only_positive_edges.json")
-    actual = compute_throughdist(source,mid,target,graph,neg_edges,beta)
-    assert actual == expected
-
-
 @pytest.mark.parametrize("source,target,beta,expected", [
     (0,7,0,set()),
     (0,7,1,{0,1,2,3,4,5,6,7}),
@@ -251,7 +184,6 @@ def test_through_dist_small_positive_path(source,mid,target,beta,expected):
     (0,6,1,{0,3,6}),
     (1,4,1,{1,4})
 ])
-
 def test_betweenness_set_small_flow_dag(source,target,beta,expected):
     graph,neg_edges = load_test_case(TESTDATA_FILEPATH+"small_flow_dag.json")
     actual = find_betweenness_set(source,target,graph,neg_edges,beta)
@@ -349,20 +281,6 @@ def test_betweeness_set_small_path_with_only_positive_edges(source,target,beta,e
     actual = find_betweenness_set(source,target,graph,neg_edges,beta)
     assert actual == expected
 
-@pytest.mark.parametrize("source,mid,target,beta,expected", [
-   (0,1,0,0,np.inf),
-   (0,1,0,1,np.inf),
-   (0,1,0,2,np.inf),
-   (0,1,0,3,np.inf),
-   (0,1,0,4,np.inf),
-   (0,1,0,5,-26),
-   (0,3,0,2,np.inf),
-   (0,3,0,3,-26)
-])
-def test_through_dist_on_negative_cycle(source,mid,target,beta,expected):
-    graph,neg_edges = load_test_case(TESTDATA_FILEPATH+"negative_cycle_6.json")
-    actual = compute_throughdist(source,mid,target,graph,neg_edges,beta)
-    assert actual == expected
 
 @pytest.mark.parametrize("source,target,beta,expected", [
     (0,7,0,set()),

@@ -12,15 +12,6 @@ TESTDATA_FILEPATH = "src/tests/test_data/"
 
 # TODO: mock test for negative sandwich
 
-# def test_of_entire_algorithm_on_empty_graph():
-#     graph, _ = load_test_case(TESTDATA_FILEPATH + "synthetic_graphs/empty_100.json")
-#
-#     expected = standard_bellman_ford(graph, 0)
-#
-#     actual = fineman(graph, 0)
-#
-#     assert actual == expected
-
 
 @pytest.mark.parametrize("depth", [3, 4, 6, 9])
 @pytest.mark.parametrize("repeat", range(2))
@@ -94,6 +85,27 @@ def test_of_entire_algorithm_on_random_graphs_of_varying_size_and_pos_neg_ratio(
         assert actual == expected
         assert len(actual) == len(expected)
 
+
+
+@pytest.mark.parametrize("filename", [filename for filename in os.listdir("src/tests/test_data/synthetic_graphs")
+                                      if filename.startswith("watts-strogatz")])
+@pytest.mark.parametrize("repeat", range(2))
+def test_of_entire_algorithm_on_watts_strogatz_of_varying_parameters(filename, repeat):
+    graph, neg_edges = load_test_case(TESTDATA_FILEPATH + "synthetic_graphs/" + filename)
+    expected = []
+    error_raised = False
+    try:
+        expected = standard_bellman_ford(graph, 0)
+
+    except NegativeCycleError:
+        error_raised = True
+        with pytest.raises(NegativeCycleError):
+            fineman(graph, 0)
+
+    if not error_raised:
+        actual = fineman(graph, 0)
+        assert actual == expected
+        assert len(actual) == len(expected)
 
 @pytest.mark.parametrize("price_function", [
     [[2] * 10],

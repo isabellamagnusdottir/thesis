@@ -163,23 +163,47 @@ def reweight_graph_and_composes_price_functions(graph: dict[int, dict[int, int]]
     :return: the graph reweighted in new_price_function, a set of the negative edges, a set of the negative vertices,
     and the composed price function.
     """
+    pass
 
+def reweight_graph(graph, price_functions: list, with_transpose = False):
     new_graph = {}
     new_neg_edges = set()
     negative_vertices = set()
+
+    if with_transpose:
+        new_graph_T = {}
+        negative_edges_T = set()
+
 
     for u, edges in graph.items():
         existing[u] += new_price_function[u]
 
         if u not in new_graph:
             new_graph[u] = {}
+        if with_transpose and u not in new_graph_T:
+            new_graph_T[u] = {}
+
         for v, w in edges.items():
             new_graph[u][v] = w + new_price_function[u] - new_price_function[v]
+            new_graph[u][v] = w
+            for p in price_functions:
+                new_graph[u][v] += p[u] - p[v]
+
+            if with_transpose:
+                if v not in new_graph_T: new_graph_T[v] = {}
+                new_graph_T[v][u] = new_graph[u][v]
+
             if new_graph[u][v] < 0:
                 new_neg_edges.add((u, v))
                 negative_vertices.add(u)
+                if with_transpose: negative_edges_T.add((v,u))
 
     return new_graph, new_neg_edges, negative_vertices, existing
+    if with_transpose:
+        return new_graph, new_neg_edges, negative_vertices, new_graph_T, negative_edges_T 
+    else:
+        return new_graph, new_neg_edges, negative_vertices
+
 
 def reweight_graph_and_get_price_functions(graph, new_price_function, existing):
     new_graph = {}

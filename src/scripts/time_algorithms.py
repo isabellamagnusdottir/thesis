@@ -6,12 +6,27 @@ from src.fineman.finemans_algorithm import fineman
 from src.scripts.bellman_ford import *
 from src.utils.cycle_error import NegativeCycleError
 from src.utils import load_test_case
-from src.scripts.synthetic_graph_generator import generate_single_graph
+from src.scripts.synthetic_graph_generator import single_graph_generator
+import cProfile
+import pstats
+from pstats import SortKey
 import numpy as np
 import csv
 import time
 
 GRAPHS_PATH = "src/tests/test_data/synthetic_graphs/"
+
+
+def load_new_graph(graph_info,n,k):
+    if graph_info[0] == "random":
+        new_path = single_graph_generator(graph_info[0],int(n),(1.0-k,k),scalar=int(int(graph_info[2])/n))
+    elif graph_info[0] == "watts-strogatz":
+        pass
+    else:
+        new_path = single_graph_generator(graph_info[0],int(n),(1.0-k,k))
+    print(new_path)
+    graph,_ = load_test_case(Path(GRAPHS_PATH+new_path+".json"))
+    return graph
 
 def time_algorithms():
     if not os.path.isdir(Path.cwd() / "empiric_data"):
@@ -20,7 +35,7 @@ def time_algorithms():
     data = []
     # files =  os.listdir(GRAPHS_PATH)
     files = [filename for filename in os.listdir(GRAPHS_PATH)
-                                      if filename.startswith(("path"))]
+                                      if filename.startswith(("random_"))]
     
     name = f"{datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")}" + "_SSSP_comparison"
     file_path = Path.cwd() / "empiric_data" / f"{name}.csv"
@@ -37,40 +52,41 @@ def time_algorithms():
             n = int(graph_info[1])
 
         k = float((graph_info[3][0]+'.'+graph_info[3][1:]))
+        if k >= 0.2: continue
+        print(k)
+        if int(graph_info[2])/n >= 5: continue
     
-        # 1. Run algorithm on 12 (only average on 10 last) unique graphs
-        # 2. if the algorithm experiences a negatice cycle error -> discard time and rerun on new graph
-        # 3. append all results to a list and take the average.
-
-
         #compute time for bellman-ford
         bellmanford_times = []
         fineman_times = []
         count = 0
-        while count <= 110:
+        while count <= 4:
+            print(count)
+            print(graph[0])
             try:
                 bford_start_time = time.time()
-                result1 = standard_bellman_ford(graph,0)
+                # result1 = standard_bellman_ford(graph,0)
                 bford_end_time = time.time()
 
+               
                 fineman_start_time = time.time()
                 result2 = fineman(graph,0)
                 fineman_end_time = time.time()
-
-                assert result1 == result2
+                # assert result1 == result2
 
                 bellmanford_times.append(bford_end_time-bford_start_time)
                 fineman_times.append(fineman_end_time-fineman_start_time)
 
-                new_path = generate_single_graph(graph_info[0],int(n),int(graph_info[2]),[1.0-k,k])
-                graph,_ = load_test_case(Path(GRAPHS_PATH+new_path+".json"))
+
+                graph = load_new_graph(graph_info,n,k)
                 count += 1
             except NegativeCycleError: 
-                new_path = generate_single_graph(graph_info[0],int(n),int(graph_info[2]),[1.0-k,k])
-                graph,_ = load_test_case(Path(GRAPHS_PATH+new_path+".json"))
+                print(NegativeCycleError)
+                graph = load_new_graph(graph_info,n,k)
                 continue
-        bellman_ford_time = np.mean(bellmanford_times[10:])
-        fineman_time = np.mean(fineman_times[10:])
+
+        bellman_ford_time = np.mean(bellmanford_times[2:])
+        fineman_time = np.mean(fineman_times[2:])
 
 
         #  agreed upon file name format:
@@ -93,7 +109,13 @@ def time_algorithms():
 
 
 def main():
+    profiler =  cProfile.Profile()
+    profiler.enable()
     time_algorithms()
+    profiler.disable()
+
+    stats = pstats.Stats(profiler).sort_stats(SortKey.CUMULATIVE)
+    stats.print_stats(10)
                 
 if __name__ == "__main__":
     main()

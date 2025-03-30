@@ -1,5 +1,7 @@
 import pytest
 
+from src.fineman.finemans_algorithm import fineman
+from src.scripts.bellman_ford import standard_bellman_ford
 from src.fineman.helper_functions import *
 from src.utils.load_test_case import load_test_case
 
@@ -25,6 +27,30 @@ def test_transpose_graph_on_multiple_graphs(filename):
 
     org_graph, _ = transpose_graph(transposed_graph)
     assert graph == org_graph
+
+@pytest.mark.parametrize("filename", [
+    "complete_4_vertices_graph_with_no_neg_edges.json",
+    "graph_already_adhere_to_one_degree_restriction.json",
+    "high_in_degree_graph.json",
+    "small_graph_with_neg_edges.json",
+    "tree_graph_single_root_with_100_children.json",
+    "graph_with_no_edges.json",
+    "disconnected_graph.json",
+    "path_with_only_neg_edges.json"
+])
+def test_reweight_transpose_is_transposed(filename):
+    graph, neg_edges = load_test_case(TESTDATA_FILEPATH + filename)
+
+    
+    empty_price_function = [[0]*len(graph)]
+    _,_,_,T_graph,T_neg_edges = reweight_graph(graph,empty_price_function,with_transpose=True)
+
+    assert graph.keys() == T_graph.keys()
+    assert all(all(graph[neighbor][vertex]  == weight for neighbor, weight in neighbors.items()) for vertex, neighbors in T_graph.items())
+    assert all( (v,u) in T_neg_edges for (u,v) in neg_edges)
+
+    transposed_graph, _ = transpose_graph(graph)
+    assert T_graph == transposed_graph
 
 
 @pytest.mark.parametrize("filename,expected", [
@@ -466,3 +492,30 @@ def test_independent_set_negative_cycle_not_detected_small(subset):
     graph,neg_edges = load_test_case(TESTDATA_FILEPATH+"independent_set_cycle_2.json")
     with pytest.raises(NegativeCycleError):
         subset_bfd(graph,neg_edges,subset,1,subset,True)
+
+@pytest.mark.parametrize("filename", [
+    "complete_4_vertices_graph_with_no_neg_edges.json",
+    "graph_already_adhere_to_one_degree_restriction.json",
+    "high_in_degree_graph.json",
+    "small_graph_with_neg_edges.json",
+    "tree_graph_single_root_with_100_children.json",
+    "graph_with_no_edges.json",
+    "disconnected_graph.json",
+    "path_with_only_neg_edges.json"
+])
+def test_of_entire_algorithm_on_grids(filename,repeat):
+    graph, _ = load_test_case(TESTDATA_FILEPATH + filename)
+    expected = []
+    error_raised = False
+    try:
+        expected = standard_bellman_ford(graph, 0)
+
+    except NegativeCycleError:
+        error_raised = True
+        with pytest.raises(NegativeCycleError):
+            fineman(graph, 0)
+
+    if not error_raised:
+        actual = fineman(graph, 0)
+        assert actual == expected
+        assert len(actual) == len(expected)

@@ -181,6 +181,24 @@ def reweight_graph_and_composes_price_functions(graph: dict[int, dict[int, int]]
 
     return new_graph, new_neg_edges, negative_vertices, existing
 
+def reweight_graph_and_get_price_functions(graph, new_price_function, existing):
+    new_graph = {}
+    new_neg_edges = set()
+    negative_vertices = set()
+
+    for u, edges in graph.items():
+        existing[u] += new_price_function[u]
+
+        if u not in new_graph:
+            new_graph[u] = {}
+        for v, w in edges.items():
+            new_graph[u][v] = w + new_price_function[u] - new_price_function[v]
+            if new_graph[u][v] < 0:
+                new_neg_edges.add((u, v))
+                negative_vertices.add(u)
+
+    return new_graph, new_neg_edges, negative_vertices, existing
+
 def compute_reach(graph,neg_edges,subset,h):
     d = subset_bfd(graph,neg_edges,subset,h)
     return {v for v in graph.keys() if d[v] < 0}

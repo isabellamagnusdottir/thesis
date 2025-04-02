@@ -35,7 +35,7 @@ def time_algorithms():
     data = []
     # files =  os.listdir(GRAPHS_PATH)
     files = [filename for filename in os.listdir(GRAPHS_PATH)
-                                      if filename.startswith(("random_"))]
+                                      if filename.startswith(("path"))]
     
     name = f"{datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")}" + "_SSSP_comparison"
     file_path = Path.cwd() / "empiric_data" / f"{name}.csv"
@@ -65,14 +65,14 @@ def time_algorithms():
             print(graph[0])
             try:
                 bford_start_time = time.time()
-                # result1 = standard_bellman_ford(graph,0)
+                result1 = standard_bellman_ford(graph,0)
                 bford_end_time = time.time()
 
                
                 fineman_start_time = time.time()
                 result2 = fineman(graph,0)
                 fineman_end_time = time.time()
-                # assert result1 == result2
+                assert result1 == result2
 
                 bellmanford_times.append(bford_end_time-bford_start_time)
                 fineman_times.append(fineman_end_time-fineman_start_time)

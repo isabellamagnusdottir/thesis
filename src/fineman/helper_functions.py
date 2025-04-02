@@ -1,5 +1,5 @@
-import numpy as np
 from queue import PriorityQueue
+from numpy import nan,inf
 
 from src.utils import NegativeCycleError
 
@@ -9,18 +9,20 @@ def dijkstra(graph: dict[int, dict[int, int]], neg_edges: set, dist: list, I_pri
     pq = PriorityQueue()
 
     for v in graph.keys():
-        pq.put((dist[v], v))
+        dist[v][0] = min(dist[v][0],dist[v][1])
+        dist[v][1] = inf
+        pq.put((dist[v][0], v))
 
     while not pq.empty():
         current_dist, u = pq.get()
-        if current_dist > dist[u]:
+        if current_dist > dist[u][0]:
             continue
         for v in graph[u]:
             if (u,v) in neg_edges:
                 continue
-            alt_dist = dist[u]+graph[u][v]
-            if alt_dist < dist[v]:
-                dist[v] = alt_dist
+            alt_dist = dist[u][0]+graph[u][v]
+            if alt_dist < dist[v][0]:
+                dist[v][0] = alt_dist
                 pq.put((alt_dist,v))
 
                 if save_source:
@@ -30,42 +32,37 @@ def dijkstra(graph: dict[int, dict[int, int]], neg_edges: set, dist: list, I_pri
 
 def bellman_ford(graph : dict[int, dict[int, int]], neg_edges: set, dist: list, I_prime = None, anc_in_I = None, parent = None, save_source = False):
 
-    old_dist = dist.copy()
-    used_hop_in_round = set()
-
     for (u,v) in neg_edges:
-        alt_dist = dist[u] + graph[u][v]
+        alt_dist = dist[u][0] + graph[u][v]
 
-        if u in used_hop_in_round:
-            alt_dist = old_dist[u] + graph[u][v]
-
-        if alt_dist < dist[v]:
-            dist[v] = alt_dist
-            used_hop_in_round.add(v)
-
+        if alt_dist < dist[v][0]:
+            dist[v][1] = alt_dist
             if save_source:
                 _compute_ancestor_parent(parent, anc_in_I, I_prime, u,v, len(graph))
 
     return dist
 
 def bfd(graph, neg_edges, dist: list, beta: int, I_prime = None,parent=None, anc_in_I=None,save_source = False):
-
-    dist = dijkstra(graph, neg_edges, dist, I_prime, parent, anc_in_I, save_source)
+    tent_dist = [[distance,inf] for distance in dist]
+    tent_dist = dijkstra(graph, neg_edges, tent_dist, I_prime, parent, anc_in_I, save_source)
     for _ in range(beta):
-        dist = bellman_ford(graph, neg_edges, dist, I_prime, parent, anc_in_I, save_source)
-        dist = dijkstra(graph, neg_edges, dist, I_prime, parent, anc_in_I, save_source)
-    return dist
+        tent_dist = bellman_ford(graph, neg_edges, tent_dist, I_prime, parent, anc_in_I, save_source)
+        tent_dist = dijkstra(graph, neg_edges, tent_dist, I_prime, parent, anc_in_I, save_source)
+    return [tent_dist[v][0] for v in range(len(graph))]
 
 def bfd_save_rounds(graph, neg_edges, dist: list, beta: int):
-    rounds = [dijkstra(graph, neg_edges, dist)]
+    tent_dist = [[distance,inf] for distance in dist]
+    tent_dist = dijkstra(graph, neg_edges, tent_dist)
+    rounds = [[tent_dist[v][0] for v in graph.keys()]]
     for i in range(beta):
         # TODO: find fix to avoid copying the rounds.
-        dist = bellman_ford(graph,neg_edges,rounds[i].copy())
-        rounds.append(dijkstra(graph,neg_edges,dist))
+        tent_dist = bellman_ford(graph,neg_edges,tent_dist)
+        tent_dist = dijkstra(graph, neg_edges, tent_dist)
+        rounds.append([tent_dist[v][0] for v in range(len(graph))])
     return rounds
 
 def b_hop_sssp(source, graph: dict[int, dict[int, int]], neg_edges: set, beta, I_prime=None,parent=None,anc_in_I=None,save_source=False):
-    dist = [np.inf] * (len(graph.keys()))
+    dist = [inf] * (len(graph.keys()))
     dist[source] = 0
 
     return bfd(graph, neg_edges, dist, beta, I_prime,parent,anc_in_I, save_source)
@@ -97,8 +94,8 @@ def transpose_graph(graph: dict[int, dict[int, int]]):
 def _subset_bfd(graph, neg_edges, subset, beta,I_prime=None,save_source=False):
     super_source = len(graph)
     graph[super_source] = {}
-    parent = [np.nan]*len(graph.keys()) if save_source else None
-    anc_in_I = [np.nan]*len(graph.keys()) if save_source else None
+    parent = [nan]*len(graph.keys()) if save_source else None
+    anc_in_I = [nan]*len(graph.keys()) if save_source else None
 
     for v in subset:
         graph[super_source][v] = 0
@@ -118,11 +115,11 @@ def subset_bfd(graph, neg_edges, subset, beta: int, I_prime=None, save_source=Fa
 def super_source_bfd(graph: dict[int, dict[int, int]], neg_edges: set, beta, cycleDetection = False):
     distances1 = _subset_bfd(graph,neg_edges,graph.keys(),beta)
     if cycleDetection:
-        distances2 = bellman_ford(graph, neg_edges, distances1.copy())
-        distances2 = dijkstra(graph, neg_edges, distances2)
-
+        tent_dist = [[distance,inf] for distance in distances1]
+        tent_dist = bellman_ford(graph, neg_edges, tent_dist)
+        tent_dist = dijkstra(graph, neg_edges, tent_dist)
         for v in graph.keys():
-            if distances2[v] < distances1[v]:
+            if tent_dist[v][0] < distances1[v]:
                 raise NegativeCycleError
 
     return distances1[:-1]
@@ -151,7 +148,7 @@ def betweenness(source, target, graph, neg_edges, beta):
     return len(find_betweenness_set(source,target,graph,neg_edges,beta))
 
 
-def reweight_graph_and_composes_price_functions(graph: dict[int, dict[int, int]], new_price_function: list[int], existing: list[int]):
+def reweight_graph_and_composes_price_functions(graph: dict[int, dict[int, int]], new_price_function: list[int], existing: list[int], with_transpose = False):
     """
     Reweights the given graph with the provided new_price_function, and composes the new_price_function with existing
     precomputed price functions.
@@ -159,13 +156,11 @@ def reweight_graph_and_composes_price_functions(graph: dict[int, dict[int, int]]
     :param graph: the initial graphs, which needs to be reweighted (dict[int, dict[int, int]])
     :param new_price_function: the price function which reweights the graph (list[int])
     :param existing: the composed price function of previously computed price functions (list[int])
+    :param with_transpose: boolean flag deciding whether a transpose graph should be generated as well
 
     :return: the graph reweighted in new_price_function, a set of the negative edges, a set of the negative vertices,
     and the composed price function.
     """
-    pass
-
-def reweight_graph(graph, price_functions: list, with_transpose = False):
     new_graph = {}
     new_neg_edges = set()
     negative_vertices = set()
@@ -180,14 +175,13 @@ def reweight_graph(graph, price_functions: list, with_transpose = False):
 
         if u not in new_graph:
             new_graph[u] = {}
+
         if with_transpose and u not in new_graph_T:
             new_graph_T[u] = {}
 
         for v, w in edges.items():
             new_graph[u][v] = w + new_price_function[u] - new_price_function[v]
-            new_graph[u][v] = w
-            for p in price_functions:
-                new_graph[u][v] += p[u] - p[v]
+
 
             if with_transpose:
                 if v not in new_graph_T: new_graph_T[v] = {}
@@ -198,11 +192,10 @@ def reweight_graph(graph, price_functions: list, with_transpose = False):
                 negative_vertices.add(u)
                 if with_transpose: negative_edges_T.add((v,u))
 
-    return new_graph, new_neg_edges, negative_vertices, existing
     if with_transpose:
-        return new_graph, new_neg_edges, negative_vertices, new_graph_T, negative_edges_T 
+        return new_graph, new_neg_edges, negative_vertices, existing, new_graph_T, negative_edges_T 
     else:
-        return new_graph, new_neg_edges, negative_vertices
+        return new_graph, new_neg_edges, negative_vertices, existing
 
 
 def reweight_graph_and_get_price_functions(graph, new_price_function, existing):
@@ -247,7 +240,7 @@ def super_source_bfd_save_rounds(graph, neg_edges, subset, beta):
         if v != super_source:
             graph[super_source][v] = 0
 
-    dist = [np.inf] * (len(graph.keys()))
+    dist = [inf] * (len(graph.keys()))
     dist[super_source] = 0
 
     dists = bfd_save_rounds(graph, neg_edges, dist, beta)

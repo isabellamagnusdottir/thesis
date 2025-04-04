@@ -27,20 +27,11 @@ def visualize_timings(csvfile_path:Path):
     
     for (graph_type,k),values in family_times.items():
         x_values = np.array([int(v[0]) for v in values])
-        fineman_reference = x_values ** (8/9)
-        hopeful_reference = x_values ** (7/9)
 
         plt.figure(figsize=(10, 6))
         plt.xscale("log")
         plt.loglog(x_values, [float(v[1]) for v in values], 'mo-', linewidth=2, markersize=8, label='Fineman Running time')
         plt.loglog(x_values, [float(v[2]) for v in values], 'bo-', linewidth=2, markersize=8, label='Bellman-Ford Running time')
-
-        # plt.loglog(x_values, fineman_reference, 'r--', linewidth=2, label=r'$mn^{8/9}$')
-        # plt.loglog(x_values, hopeful_reference, 'g--', linewidth=2, label=r'$mn^{7/9}$')
-
-        ########### MAKE THE ROUNDS RUN SEPARATELY ON THE SAME GRAPHS USING METHODS SO THAT THEY DONT INTERFERE!
-        ########### OR SMTHING -> Maybe do generate a set of 25 graphs that they all just run
-        ########### MAKE THEM CHECK RESULTS SO WE ENSURE SIMILAR SHORTEST PATHS!!!!!!!!!
 
         # Add labels and title
         if graph_type != 'grid':

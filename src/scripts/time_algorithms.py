@@ -7,6 +7,8 @@ from src.scripts.bellman_ford import *
 from src.utils.cycle_error import NegativeCycleError
 from src.utils import load_test_case
 from src.scripts.synthetic_graph_generator import single_graph_generator
+from src.scripts.random_graph_no_neg_cycles_gen import random_graph_no_neg_cycles_generator,\
+    generate_random_neg_cycleless_graph
 import cProfile
 import pstats
 from pstats import SortKey
@@ -17,14 +19,19 @@ import time
 GRAPHS_PATH = "src/tests/test_data/synthetic_graphs/"
 
 
-def load_new_graph(graph_info,n,k):
-    if graph_info[0] == "random":
-        new_path = single_graph_generator(graph_info[0],int(n),(1.0-k,k),scalar=int(int(graph_info[2])/n))
-    elif graph_info[0] == "watts-strogatz":
-        pass
+def load_new_graph(graph_info, n: int, k: float):
+    if graph_info[0] == "watts-strogatz":
+        p = float((graph_info[4][0]+'.'+graph_info[4][1:]))
+        k = int(graph_info[5])
+        new_path = single_graph_generator(graph_info[0],int(n),(1.0-k,k),p=p,k=k)
+    elif graph_info[0].startswith("random"):
+        scalar = int(int(graph_info[2])/n)
+        if graph_info[0][:-1] == '1':
+            new_path = random_graph_no_neg_cycles_generator(n,scalar)
+        else:
+            new_path = generate_random_neg_cycleless_graph(n,scalar,(1.0-k,k))
     else:
         new_path = single_graph_generator(graph_info[0],int(n),(1.0-k,k))
-    print(new_path)
     graph,_ = load_test_case(Path(GRAPHS_PATH+new_path+".json"))
     return graph
 
@@ -33,9 +40,7 @@ def time_algorithms():
         os.makedirs(Path.cwd() / "empiric_data")
 
     data = []
-    # files =  os.listdir(GRAPHS_PATH)
-    files = [filename for filename in os.listdir(GRAPHS_PATH)
-                                      if filename.startswith(("path"))]
+    files = [filename for filename in os.listdir(GRAPHS_PATH)]
     
     name = f"{datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")}" + "_SSSP_comparison"
     file_path = Path.cwd() / "empiric_data" / f"{name}.csv"
@@ -52,15 +57,12 @@ def time_algorithms():
             n = int(graph_info[1])
 
         k = float((graph_info[3][0]+'.'+graph_info[3][1:]))
-        if k >= 0.2: continue
-        print(k)
-        if int(graph_info[2])/n >= 5: continue
     
         #compute time for bellman-ford
         bellmanford_times = []
         fineman_times = []
         count = 0
-        while count <= 4:
+        while count <= 12:
             print(count)
             print(graph[0])
             try:
@@ -72,6 +74,7 @@ def time_algorithms():
                 fineman_start_time = time.time()
                 result2 = fineman(graph,0)
                 fineman_end_time = time.time()
+
                 assert result1 == result2
 
                 bellmanford_times.append(bford_end_time-bford_start_time)
@@ -88,10 +91,6 @@ def time_algorithms():
         bellman_ford_time = np.mean(bellmanford_times[2:])
         fineman_time = np.mean(fineman_times[2:])
 
-
-        #  agreed upon file name format:
-        # how to detect errors? make them both assert that they found an error for the same graphs?
-        # make numbers very low to indicate error? 
         data.append({'file':file_path, 'graph_family': graph_info[0],
                      'n': n, 'm': graph_info[2], 'k': k,
                      'bellman_ford_time': bellman_ford_time,

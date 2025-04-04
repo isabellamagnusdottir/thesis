@@ -91,7 +91,7 @@ def single_graph_generator(graph_family: str, no_of_vertices: int, ratio: tuple[
             p = kwargs.get("p")
 
             graph = nx.connected_watts_strogatz_graph(no_of_vertices, k, p, 1000)
-            filename = f"watts-strogatz_{no_of_vertices}_{len(graph.edges)}_{str(ratio[1]).replace(".", "")}_{str(p).replace(".", "")}"
+            filename = f"watts-strogatz_{no_of_vertices}_{len(graph.edges)}_{str(ratio[1]).replace(".", "")}_{str(p).replace(".", "")}_{str(k).replace(".", "")}"
 
         case "grid":
             graph = _generate_single_grid_graph(no_of_vertices)

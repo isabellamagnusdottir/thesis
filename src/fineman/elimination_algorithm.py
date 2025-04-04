@@ -52,15 +52,13 @@ def elimination_algorithm(org_graph, org_neg_edges, seed = None):
     r = ceil(k**(1/9))
 
     phi_1 = betweenness_reduction(org_graph, org_neg_edges, tau=r, beta=r+1, c=c)
-    graph_phi1, neg_edges, U_0, composed_price_function = reweight_graph_and_composes_price_functions(org_graph, phi_1, composed_price_function)
+    graph_phi1, neg_edges, U_0, composed_price_function,graph_T,neg_edges_T = reweight_graph_and_composes_price_functions(org_graph, phi_1, composed_price_function,with_transpose=True)
 
     if len(neg_edges) == 0: return graph_phi1, neg_edges, U_0, composed_price_function
 
     match find_is_or_crust(graph_phi1, neg_edges, U_0, c, c+1):
         case (y,U_1):
 
-            # TODO: refactor to keep track of global transposed graph
-            graph_T, neg_edges_T = transpose_graph(graph_phi1)
             match find_is_or_crust(graph_T, neg_edges_T, U_1, c, c+1):
                 case (x,U_2):
                     while len(U_2) > k**(1/3):

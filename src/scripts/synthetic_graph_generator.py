@@ -66,7 +66,7 @@ def _generate_single_grid_graph(size):
     return nx.relabel_nodes(grid, mapping)
 
 
-def single_graph_generator(graph_family: str, no_of_vertices: int, ratio: tuple[int, int], **kwargs):
+def single_graph_generator(graph_family: str, no_of_vertices: int, ratio: tuple[float, float], **kwargs):
     filename = ""
 
     match graph_family:
@@ -135,7 +135,6 @@ def generate_multiple_watts_strogatz_graphs(no_of_vertices, ratios, ks, ps):
             for k in ks:
                 for p in ps:
                     single_graph_generator("watts-strogatz", num, r, k=k, p=p)
-
 
 def main():
     # PATHS, CYCLES, TREES, COMPLETE GRAPHS

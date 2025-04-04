@@ -1,11 +1,47 @@
 import json
 import re
-
-import networkx as nx
 import random as rand
-
+import networkx as nx
 from networkx.classes import DiGraph
+from networkx import find_negative_cycle
+from src.scripts.synthetic_graph_generator import _get_weight
 
+
+def swap_sign_of_neg_edge_in_cycle(G,cycle):
+    # print(f"cycle is: {cycle}")
+    u = rand.choice(cycle)
+    # print(f"index of u: {u} is: {cycle.index(u)}")
+    if cycle.index(u) + 1 >= len(cycle):
+        v = cycle[0]
+    else:
+        v = cycle[cycle.index(u)+1]
+    # print(f"Edge about to be swapped {u},{v}")
+    weight = G[u][v]['weight']
+    if weight >= 0: return swap_sign_of_neg_edge_in_cycle(G,cycle)
+    G[u][v]['weight'] = weight*-1
+    return
+
+def generate_random_neg_cycleless_graph(n,scalar,ratio: tuple[float,float]):
+
+    G = nx.gnm_random_graph(n, scalar * n, directed=True)
+    for u,v in G.edges():
+        G[u][v]['weight'] = _get_weight(ratio)
+    print(G)
+    while True:
+        try:
+            cycle = find_negative_cycle(G,0)[:-1]
+        except:
+            break
+        swap_sign_of_neg_edge_in_cycle(G,cycle)
+
+    neg_count = 0
+    for u,v in G.edges():
+        if G[u][v]['weight'] < 0:
+            neg_count += 1
+
+
+    filename = f"random-no-neg-cycles-2_{n}_{scalar * n}_{neg_count}_{ratio[0]}"
+    _save_graph_json(G,filename)
 
 def _graph_to_json(graph: DiGraph):
     graph_data = {}
@@ -55,16 +91,20 @@ def random_graph_no_neg_cycles_generator(no_of_vertices: int, edge_scalar: int):
             neg_edges.add((u,v))
             failed_attempts = 100
 
-    filename = f"random-no-neg-cycles_{no_of_vertices}_{edge_scalar}_{len(neg_edges)}"
+    filename = f"random-no-neg-cycles-1_{no_of_vertices}_{edge_scalar*no_of_vertices}_{len(neg_edges)}"
     _save_graph_json(graph, filename)
 
 
 def main():
     sizes = [10, 50, 100, 200, 500, 750, 1000]
     scalars = [3, 5, 6, 9]
+    ratios = [(0.9, 0.1), (0.8, 0.2), (0.66, 0.34), (0.5, 0.5), (0.2, 0.8), (0.0, 1.0)]
     for num in sizes:
         for scalar in scalars:
             random_graph_no_neg_cycles_generator(num, scalar)
+            for ratio in ratios:
+                generate_random_neg_cycleless_graph(num,scalar,ratio)
+
 
 if __name__ == '__main__':
     main()

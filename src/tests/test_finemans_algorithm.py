@@ -28,7 +28,7 @@ def test_of_entire_algorithm_on_double_tree_graph(depth, repeat):
 @pytest.mark.parametrize("filename", [filename for filename in os.listdir("src/tests/test_data/synthetic_graphs")
                                       if filename.startswith(("path", "complete", "cycle", "random-tree"))])
 def test_of_entire_algorithm_on_various_graph_families(filename):
-    graph, neg_edges = load_test_case(TESTDATA_FILEPATH + "synthetic_graphs/" + filename)
+    graph, _ = load_test_case(TESTDATA_FILEPATH + "synthetic_graphs/" + filename)
     expected = []
     error_raised = False
     try:
@@ -39,16 +39,16 @@ def test_of_entire_algorithm_on_various_graph_families(filename):
         with pytest.raises(NegativeCycleError):
             fineman(graph, 0)
 
-
-        actual = fineman(graph, 0)
-        assert actual == expected
-        assert len(actual) == len(expected)
+        if not error_raised:
+            actual = fineman(graph, 0)
+            assert actual == expected
+            assert len(actual) == len(expected)
 
 
 @pytest.mark.parametrize("filename", [filename for filename in os.listdir("src/tests/test_data/synthetic_graphs")
                                       if filename.startswith("grid")])
 def test_of_entire_algorithm_on_grids(filename):
-    graph, neg_edges = load_test_case(TESTDATA_FILEPATH + "synthetic_graphs/" + filename)
+    graph, _ = load_test_case(TESTDATA_FILEPATH + "synthetic_graphs/" + filename)
     expected = []
     error_raised = False
     try:

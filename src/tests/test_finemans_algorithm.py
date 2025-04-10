@@ -121,7 +121,7 @@ def test_inverse_dist_array(price_function):
 
     dists = standard_bellman_ford(graph, 0)
 
-    assert org_dists == _compute_original_distances(0, dists, composed_pf)
+    assert org_dists == _compute_original_distances(0, 10, dists, composed_pf)
 
 
 def test_finding_connected_component_to_source_on_disconnected_graphs():

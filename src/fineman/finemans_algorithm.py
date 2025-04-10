@@ -10,8 +10,8 @@ from src.fineman.dijkstra import dijkstra
 from src.fineman.elimination_algorithm import elimination_algorithm
 
 
-def _compute_original_distances(source, reweighted_distances, composed_price_function):
-    actual_dists = [0] * len(reweighted_distances)
+def _compute_original_distances(source, org_n, reweighted_distances, composed_price_function):
+    actual_dists = [0] * org_n
 
     for i in range(len(actual_dists)):
         actual_dists[i] = reweighted_distances[i] + composed_price_function[i] - composed_price_function[source]
@@ -59,8 +59,6 @@ def fineman(graph: dict[int, dict[int, int]], source: int, seed = None):
 
     org_n = len(graph.keys())
 
-    graph, index_mapping = _find_connected_component_to_source(graph, source)
-
     m = sum(len(neighbors) for neighbors in graph.values())
     graph, neg_edges = preprocess_graph(graph, org_n, m)
 
@@ -81,7 +79,7 @@ def fineman(graph: dict[int, dict[int, int]], source: int, seed = None):
 
             if len(neg_edges) == 0: break
 
-    distances = dijkstra(graph, index_mapping[source])
-    converted_distances = _compute_original_distances(index_mapping[source], distances, all_price_functions)
+    distances = dijkstra(graph, source)
+    converted_distances = _compute_original_distances(source, org_n, distances, all_price_functions)
 
-    return _remapping_distances(converted_distances, org_n, index_mapping)
+    return converted_distances

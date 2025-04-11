@@ -3,18 +3,23 @@ import re
 import random as rand
 import networkx as nx
 from src.scripts.synthetic_graph_generator import _get_weight
+from src.scripts.bellman_ford import standard_bellman_ford
+from src.utils.cycle_error import NegativeCycleError
 
-
-def swap_sign_of_neg_edge_in_cycle(G,cycle):
+def swap_sign_of_neg_edge_in_cycle(graph,cycle):
     u = rand.choice(cycle)
-    if cycle.index(u) + 1 >= len(cycle):
-        v = cycle[0]
-    else:
-        v = cycle[cycle.index(u)+1]
-    weight = G[u][v]['weight']
-    if weight >= 0: return swap_sign_of_neg_edge_in_cycle(G,cycle)
-    G[u][v]['weight'] = weight*-1
-    return
+    while True:
+        if cycle.index(u) + 1 >= len(cycle):
+            v = cycle[0]
+        else:
+            v = cycle[cycle.index(u)+1]
+        weight = graph[u][v]
+        if weight > 0:
+            u = v
+            continue
+        else:
+            graph[u][v] = abs(weight)
+            break
 
 
 def _graph_to_json(graph: nx.classes.DiGraph):
@@ -26,7 +31,6 @@ def _graph_to_json(graph: nx.classes.DiGraph):
         if u in graph.nodes:
             for v in graph.neighbors(u):
                 graph_data[str(u)].append([v, graph[u][v]['weight']])
-
     return graph_data
 
 
@@ -70,25 +74,40 @@ def generate_random_no_neg_cycles_graph_1(no_of_vertices: int, edge_scalar: int)
     return filename
 
 def generate_random_no_neg_cycles_graph_2(n,scalar,ratio: tuple[float,float]):
-
     G = nx.gnm_random_graph(n, scalar * n, directed=True)
+    graph = {}
+    for u in G.nodes():
+        graph[u] = {}
     for u,v in G.edges():
-        G[u][v]['weight'] = _get_weight(ratio)
+        graph[u][v] = _get_weight(ratio)
+
     while True:
         try:
-            cycle = nx.find_negative_cycle(G,0)[:-1]
-        except:
-            break
-        swap_sign_of_neg_edge_in_cycle(G,cycle)
+            standard_bellman_ford(graph,0,with_parent=True)
+        except NegativeCycleError as e:
+            swap_sign_of_neg_edge_in_cycle(graph,e.get_cycle()[:-1])
+            continue
+        break
 
+
+    json_graph = {}
     neg_count = 0
-    for u,v in G.edges():
-        if G[u][v]['weight'] < 0:
-            neg_count += 1
+    for u in graph.keys():
+        json_graph[str(u)] = []
+        for v in graph[u].keys():
+            weight = graph[u][v]
+            json_graph[str(u)].append([v,weight])
+            if weight < 0:
+                neg_count += 1
 
-
-    filename = f"random-no-neg-cycles-2_{n}_{scalar * n}_{neg_count}_{ratio[0]}"
-    _save_graph_json(G,filename)
+    filename = f"random-no-neg-cycles-2_{n}_{scalar * n}_{neg_count}_{str(ratio[1]).replace(".","")}"
+    print(filename)
+    with open("src/tests/test_data/synthetic_graphs/" + filename + ".json", 'w') as f:
+        json_str = json.dumps(json_graph, indent=2)
+        json_str = re.sub(r'\[\n\s*(\d+),\n\s*(-?\d+)\n\s*\]', r'[\1,\2]', json_str)
+        f.write(json_str)
+        f.close()
+    return filename
 
 def main():
     sizes = [10, 50, 100, 200, 500, 750, 1000]

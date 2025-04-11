@@ -7,4 +7,4 @@ class NegativeCycleError(Exception):
         super().__init__(self.message)
 
     def get_cycle(self):
-        return self.cycle is not None
+        return self.cycle if self.cycle is not None else None

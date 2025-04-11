@@ -5,14 +5,14 @@ import networkx as nx
 from src.scripts.synthetic_graph_generator import _get_weight
 
 
-def swap_sign_of_neg_edge_in_cycle(G,cycle):
+def _swap_sign_of_neg_edge_in_cycle(G,cycle):
     u = rand.choice(cycle)
     if cycle.index(u) + 1 >= len(cycle):
         v = cycle[0]
     else:
         v = cycle[cycle.index(u)+1]
     weight = G[u][v]['weight']
-    if weight >= 0: return swap_sign_of_neg_edge_in_cycle(G,cycle)
+    if weight >= 0: return _swap_sign_of_neg_edge_in_cycle(G,cycle)
     G[u][v]['weight'] = weight*-1
     return
 

@@ -82,6 +82,5 @@ def fineman(graph: dict[int, dict[int, int]], source: int, seed = None):
             if len(neg_edges) == 0: break
 
     distances = dijkstra(graph, index_mapping[source])
-    converted_distances = _compute_original_distances(index_mapping[source], distances, all_price_functions)
 
-    return _remapping_distances(converted_distances, org_n, index_mapping)
+    return distances

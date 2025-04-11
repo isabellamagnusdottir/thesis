@@ -61,7 +61,7 @@ def fineman(graph: dict[int, dict[int, int]], source: int, seed = None):
 
     m = sum(len(neighbors) for neighbors in graph.values())
     graph, neg_edges = preprocess_graph(graph, org_n, m)
-
+    org_graph = graph.copy()
     n = len(graph.keys())
     neg_edges = {(u,v) for u, edges in graph.items() for v, w in edges.items() if w < 0}
 
@@ -79,7 +79,6 @@ def fineman(graph: dict[int, dict[int, int]], source: int, seed = None):
 
             if len(neg_edges) == 0: break
 
-    distances = dijkstra(graph, source)
-    converted_distances = _compute_original_distances(source, org_n, distances, all_price_functions)
+    distances = dijkstra(graph, index_mapping[source],org_graph)
 
-    return converted_distances
+    return distances

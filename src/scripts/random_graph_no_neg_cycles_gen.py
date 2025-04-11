@@ -19,6 +19,7 @@ def swap_sign_of_neg_edge_in_cycle(graph,cycle):
             continue
         else:
             graph[u][v] = abs(weight)
+            break
 
 
 def _graph_to_json(graph: nx.classes.DiGraph):
@@ -82,9 +83,9 @@ def generate_random_no_neg_cycles_graph_2(n,scalar,ratio: tuple[float,float]):
 
     while True:
         try:
-            standard_bellman_ford(graph,0,with_parent=True)[:-1]
+            standard_bellman_ford(graph,0,with_parent=True)
         except NegativeCycleError as e:
-            swap_sign_of_neg_edge_in_cycle(graph,e.get_cycle())
+            swap_sign_of_neg_edge_in_cycle(graph,e.get_cycle()[:-1])
             continue
         break
 
@@ -114,7 +115,7 @@ def main():
     ratios = [(0.9, 0.1), (0.8, 0.2), (0.66, 0.34), (0.5, 0.5), (0.2, 0.8), (0.0, 1.0)]
     for num in sizes:
         for scalar in scalars:
-            # generate_random_no_neg_cycles_graph_1(num, scalar)
+            generate_random_no_neg_cycles_graph_1(num, scalar)
             for ratio in ratios:
                 generate_random_no_neg_cycles_graph_2(num,scalar,ratio)
 

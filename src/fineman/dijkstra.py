@@ -1,12 +1,13 @@
 from queue import PriorityQueue
 from numpy import inf
 
-def dijkstra(graph, source):
+def dijkstra(graph, source, org_graph):
     dist = [inf] * (len(graph.keys()))
     dist[source] = 0
-    #predecessor = [-1] * len(graph.keys())
-
     pq = PriorityQueue()
+
+    org_dist = [inf] * (len(graph.keys()))
+    org_dist[source] = 0
 
     for v in graph.keys():
         pq.put((dist[v], v))
@@ -19,8 +20,8 @@ def dijkstra(graph, source):
         for v in graph[u]:
             alt_dist = dist[u] + graph[u][v]
             if alt_dist < dist[v]:
+                org_dist[v] = org_dist[u] + org_graph[u][v]
                 dist[v] = alt_dist
                 pq.put((alt_dist, v))
-                #predecessor[v] = u
 
-    return dist #, predecessor
+    return org_dist

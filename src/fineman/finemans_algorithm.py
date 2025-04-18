@@ -1,57 +1,9 @@
 import random as rand
-from collections import deque
 from math import log2
-
-from bidict import bidict
-from numpy import inf
 
 from src.fineman import preprocess_graph
 from src.fineman.dijkstra import dijkstra
 from src.fineman.elimination_algorithm import elimination_algorithm
-
-
-def _compute_original_distances(source, org_n, reweighted_distances, composed_price_function):
-    actual_dists = [0] * org_n
-
-    for i in range(len(actual_dists)):
-        actual_dists[i] = reweighted_distances[i] + composed_price_function[i] - composed_price_function[source]
-
-    return actual_dists
-
-def _find_connected_component_to_source(graph, source: int):
-    mapping = bidict()
-
-    queue = deque()
-    explored = [False] * len(graph)
-    mapping[source] = 0
-    queue.append(source)
-    explored[source] = True
-
-    new_graph = {0: {}}
-
-    while queue:
-        vertex = queue.popleft()
-        if mapping[vertex] not in new_graph:
-            new_graph[mapping[vertex]] = {}
-
-        for n, w in graph[vertex].items():
-            if not explored[n]:
-                new_name = len(mapping)
-                mapping[n] = new_name
-                queue.append(n)
-                explored[n] = True
-            new_graph[mapping[vertex]][mapping[n]] = w
-
-    return new_graph, mapping
-
-def _remapping_distances(distances, n, mapping):
-    dist = [inf] * n
-
-    for old, new in mapping.items():
-        dist[old] = distances[new]
-
-    return dist
-
 
 def fineman(graph: dict[int, dict[int, int]], source: int, seed = None):
 
@@ -79,6 +31,6 @@ def fineman(graph: dict[int, dict[int, int]], source: int, seed = None):
 
             if len(neg_edges) == 0: break
 
-    distances = dijkstra(graph, index_mapping[source],org_graph)
+    distances = dijkstra(graph, source,org_graph)[:org_n]
 
     return distances

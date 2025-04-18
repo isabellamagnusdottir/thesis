@@ -2,11 +2,12 @@ import os
 import pytest
 
 from src.fineman import reweight_graph_and_composes_price_functions
-from src.fineman.finemans_algorithm import fineman, _compute_original_distances, \
-    _find_connected_component_to_source
+from src.fineman.finemans_algorithm import fineman
+from src.utils.load_test_case import  _find_connected_component_to_source
 from src.scripts import standard_bellman_ford
 from src.scripts.double_tree_graph_generator import generate_double_tree
 from src.utils import load_test_case, NegativeCycleError
+from src.fineman.helper_functions import _compute_original_distances
 
 TESTDATA_FILEPATH = "src/tests/test_data/"
 
@@ -129,7 +130,7 @@ def test_finding_connected_component_to_source_on_disconnected_graphs():
 
     graph, _ = load_test_case(TESTDATA_FILEPATH + "graphs/disconnected_graph.json")
 
-    new_graph, mapping = _find_connected_component_to_source(graph, 0)
+    new_graph, _ = _find_connected_component_to_source(graph, 0)
 
     assert new_graph == expected
 

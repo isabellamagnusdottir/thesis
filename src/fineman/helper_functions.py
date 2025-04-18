@@ -229,8 +229,6 @@ def _compute_ancestor_parent(parent, anc_in_I, I_prime, u: int,v: int, super_sou
     else:
         anc_in_I[v] = anc_in_I[parent[v]]
 
-
-
 def super_source_bfd_save_rounds(graph, neg_edges, subset, beta):
     super_source = len(graph)
     graph[super_source] = {}
@@ -244,3 +242,20 @@ def super_source_bfd_save_rounds(graph, neg_edges, subset, beta):
     dists = bfd_save_rounds(graph, neg_edges, dist, beta)
     del graph[super_source]
     return [lst[:-1] for lst in dists]
+
+
+def _compute_original_distances(source, org_n, reweighted_distances, composed_price_function):
+    actual_dists = [0] * org_n
+
+    for i in range(len(actual_dists)):
+        actual_dists[i] = reweighted_distances[i] + composed_price_function[i] - composed_price_function[source]
+
+    return actual_dists
+
+def _remapping_distances(distances, n, mapping):
+    dist = [inf] * n
+
+    for old, new in mapping.items():
+        dist[old] = distances[new]
+
+    return dist

@@ -1,13 +1,11 @@
 import os
 import pytest
 
-from src.fineman import reweight_graph_and_composes_price_functions
 from src.fineman.finemans_algorithm import fineman
 from src.utils.load_test_case import  _find_connected_component_to_source
 from src.scripts import standard_bellman_ford
 from src.scripts.double_tree_graph_generator import generate_double_tree
 from src.utils import load_test_case, NegativeCycleError
-from src.fineman.helper_functions import _compute_original_distances
 
 TESTDATA_FILEPATH = "src/tests/test_data/"
 
@@ -107,22 +105,6 @@ def test_of_entire_algorithm_on_watts_strogatz_of_varying_parameters(filename, r
         actual = fineman(graph, 0)
         assert actual == expected
         assert len(actual) == len(expected)
-
-@pytest.mark.parametrize("price_function", [
-    [2] * 10,
-    [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-    [56, 23, 67, 34, 23, 7, 8, 23, 546, 67]
-])
-def test_inverse_dist_array(price_function):
-    org_graph = {0: {1: 1}, 1: {2: 1}, 2: {3: 1}, 3: {4: 1}, 4: {5: 1}, 5: {6: 1}, 6: {7: 1}, 7: {8: 1}, 8: {9: 1},
-                 9: {}}
-    org_dists = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-
-    graph, neg_edges, _, composed_pf = reweight_graph_and_composes_price_functions(org_graph, price_function, [0] * len(org_graph))
-
-    dists = standard_bellman_ford(graph, 0)
-
-    assert org_dists == _compute_original_distances(0, 10, dists, composed_pf)
 
 
 def test_finding_connected_component_to_source_on_disconnected_graphs():

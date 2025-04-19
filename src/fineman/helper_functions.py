@@ -52,7 +52,7 @@ def bfd(graph, neg_edges, dist: list, beta: int, I_prime = None,parent=None, anc
 def bfd_save_rounds(graph, neg_edges, dist: list, beta: int):
     dist = dijkstra(graph, neg_edges, dist)
     rounds = [[dist[v][0] for v in graph.keys()]]
-    for i in range(beta):
+    for _ in range(beta):
         # TODO: find fix to avoid copying the rounds.
         dist = bellman_ford(graph,neg_edges,dist)
         dist = dijkstra(graph, neg_edges, dist)
@@ -242,20 +242,3 @@ def super_source_bfd_save_rounds(graph, neg_edges, subset, beta):
     dists = bfd_save_rounds(graph, neg_edges, dist, beta)
     del graph[super_source]
     return [lst[:-1] for lst in dists]
-
-
-def _compute_original_distances(source, org_n, reweighted_distances, composed_price_function):
-    actual_dists = [0] * org_n
-
-    for i in range(len(actual_dists)):
-        actual_dists[i] = reweighted_distances[i] + composed_price_function[i] - composed_price_function[source]
-
-    return actual_dists
-
-def _remapping_distances(distances, n, mapping):
-    dist = [inf] * n
-
-    for old, new in mapping.items():
-        dist[old] = distances[new]
-
-    return dist

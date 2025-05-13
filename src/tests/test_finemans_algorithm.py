@@ -135,3 +135,5 @@ def test_entire_algorithm_on_several_edge_weight_types(type_str, vertices, edge_
             _assert_distances_are_close(actual, expected)
         else:
             assert(actual, expected)
+
+    globals.change_weight_type(float)

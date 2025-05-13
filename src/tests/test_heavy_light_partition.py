@@ -3,7 +3,6 @@ import pytest
 from src.fineman.heavy_light_partition import *
 from src.utils.load_test_case import load_test_case
 
-
 TESTDATA_FILEPATH = "src/tests/test_data/graphs/"
 
 @pytest.mark.parametrize("subset,expected",[

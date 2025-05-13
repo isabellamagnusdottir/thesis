@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from numpy import inf
 import src.globals as globals
 from math import isclose
@@ -5,9 +7,13 @@ from math import isclose
 from src.utils.cycle_error import NegativeCycleError
 
 
-def standard_bellman_ford(graph: dict[int, dict[int, float]], source: int, with_parent = False):
-    dist = [inf]*len(graph)
-    dist[source] = 0
+def standard_bellman_ford(graph, source: int, with_parent = False):
+    if globals.WEIGHT_TYPE is Decimal:
+        infi = Decimal("Infinity")
+    else:
+        infi = inf
+    dist = [infi] * len(graph)
+    dist[source] = globals.WEIGHT_TYPE(0)
     if with_parent: parent = [None] * len(graph)
     for _ in range(len(graph)-1):
         for u,neighborhood in graph.items():

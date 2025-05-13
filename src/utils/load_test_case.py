@@ -35,7 +35,7 @@ def _find_connected_component_to_source(graph, source: int):
     return new_graph, neg_edges
 
 
-def load_test_case(path: str, only_cc = False) -> tuple[dict[int, dict[int, float]], set[tuple[int, int]]]:
+def load_test_case(path: str, only_cc = False):
 
     with open(path, 'r') as file:
         data = json.load(file)

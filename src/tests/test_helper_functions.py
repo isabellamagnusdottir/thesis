@@ -1,5 +1,4 @@
 import pytest
-from numpy import inf
 from src.fineman.helper_functions import *
 from src.utils.load_test_case import load_test_case
 
@@ -16,6 +15,7 @@ TESTDATA_FILEPATH = "src/tests/test_data/graphs/"
     "path_with_only_neg_edges.json"
 ])
 def test_transpose_graph_on_multiple_graphs(filename):
+    
     graph, _ = load_test_case(TESTDATA_FILEPATH + filename)
 
     transposed_graph, _ = transpose_graph(graph)
@@ -84,10 +84,10 @@ def test_dijkstra_implementation(filename, expected):
 
 
 @pytest.mark.parametrize("filename,expected", [
-    ("complete_4_vertices_graph_with_no_neg_edges.json", [ 0, inf, inf, inf]),
-    ("disconnected_graph.json", [ 0, inf, -1, inf, inf, inf]),
-    ("path_with_only_neg_edges.json", [ 0, -1, inf, inf, inf, inf]),
-    ("path_tricky.json", [ 0, inf, inf, inf, inf, inf]),
+    ("complete_4_vertices_graph_with_no_neg_edges.json", [0, inf, inf, inf]),
+    ("disconnected_graph.json", [0, inf, -1, inf, inf, inf]),
+    ("path_with_only_neg_edges.json", [0, -1, inf, inf, inf, inf]),
+    ("path_tricky.json", [0, inf, inf, inf, inf, inf]),
 ])
 def test_bellman_ford_implementation(filename, expected):
     graph, neg_edges = load_test_case(TESTDATA_FILEPATH + filename)

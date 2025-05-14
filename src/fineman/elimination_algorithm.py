@@ -52,7 +52,7 @@ def elimination_algorithm(org_graph, org_neg_edges, seed = None):
 
     
     phi_1 = betweenness_reduction(org_graph, org_neg_edges, tau=r, beta=r+1, c=c)
-    graph_phi1, neg_edges, U_0, graph_T,neg_edges_T = reweight_graph_and_composes_price_functions(org_graph, phi_1,with_transpose=True)
+    graph_phi1, neg_edges, U_0, graph_T, neg_edges_T = reweight_graph_and_composes_price_functions(org_graph, phi_1, with_transpose=True)
 
     if len(neg_edges) == 0: return graph_phi1, neg_edges, U_0
 

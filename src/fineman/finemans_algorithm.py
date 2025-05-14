@@ -4,9 +4,10 @@ from math import log2
 from src.fineman import preprocess_graph
 from src.fineman.dijkstra import dijkstra
 from src.fineman.elimination_algorithm import elimination_algorithm
+import src.globals as globals
 
-def fineman(graph: dict[int, dict[int, float]], source: int, seed = None):
-
+def fineman(graph, source: int, seed = None, weight_type = float):
+    globals.change_weight_type(weight_type)
     if seed is not None: rand.seed(seed)
 
     org_n = len(graph.keys())
@@ -22,7 +23,10 @@ def fineman(graph: dict[int, dict[int, float]], source: int, seed = None):
         k = len(neg_edges)
 
         for _ in range(int(k**(2/3))):
+            prev_k = len(neg_edges)
+            print("calling elimination_algorithm")
             graph, neg_edges, _ = elimination_algorithm(graph, neg_edges)
+            assert prev_k >= len(neg_edges)
 
             if len(neg_edges) == 0: return dijkstra(graph, source, org_graph)[:org_n]
 

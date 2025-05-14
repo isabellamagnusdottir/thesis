@@ -8,7 +8,6 @@ from src.utils.load_test_case import load_test_case
 
 TESTDATA_FILEPATH = "src/tests/test_data/graphs/"
 
-
 def _assert_reduced_betweenness(price_function, graph, neg_edges, beta, threshold):
     assert any(betweenness(u, v, graph, neg_edges, beta) > threshold for v in graph.keys() for u in graph.keys())
 

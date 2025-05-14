@@ -1,4 +1,3 @@
-import numpy as np
 import pytest
 
 from src.fineman.heavy_light_partition import *

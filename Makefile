@@ -15,8 +15,10 @@ time:
 visualize:
 	poetry run python -m src.scripts.visualize_times
 
+TYPE ?= int
+
 generate-graphs:
-	poetry run python -m src.scripts.synthetic_graph_generator
+	poetry run python -m src.scripts.synthetic_graph_generator $(TYPE)
 
 generate-random-graphs:
 	poetry run python -m src.scripts.random_graph_no_neg_cycles_gen

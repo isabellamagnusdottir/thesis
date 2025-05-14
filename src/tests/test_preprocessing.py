@@ -4,7 +4,6 @@ from src.utils.load_test_case import load_test_case
 
 TESTDATA_FILEPATH = "src/tests/test_data/graphs/"
 
-
 # DEGREE OF ONE TESTS
 def test_ensure_degree_of_one_for_tree_with_neg_root():
     graph, _ = load_test_case(TESTDATA_FILEPATH + "tree_graph_two_layered_negative_root.json")

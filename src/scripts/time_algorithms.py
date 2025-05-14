@@ -83,6 +83,8 @@ def time_algorithms():
                     result2 = fineman(graph,0)
                     fineman_end_time = time.time()
 
+                    assert result1 == result2
+
                 graph = load_new_graph(graph_info)
                 count += 1
             except NegativeCycleError: 
@@ -91,7 +93,7 @@ def time_algorithms():
                 continue
 
 
-            assert np.allclose(result1, result2, rtol=1e-7, atol=1e-9)
+            
 
             bellmanford_times.append(bford_end_time-bford_start_time)
             fineman_times.append(fineman_end_time-fineman_start_time)

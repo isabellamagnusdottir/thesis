@@ -1,15 +1,24 @@
+from decimal import Decimal
+from math import isclose
+
 from numpy import nan,inf
 import heapq
 
 from src.utils import NegativeCycleError
+import src.globals as globals
 
-
-def dijkstra(graph: dict[int, dict[int, float]], neg_edges: set, dist: list, pq, I_prime = None, parent = None, anc_in_I=None, save_source = False):
+def dijkstra(graph, neg_edges: set, dist: list, pq, I_prime = None, parent = None, anc_in_I=None, save_source = False):
 
     for v in graph.keys():
-        if (dist[v][0] > dist[v][1]):
+        if dist[v][0] > dist[v][1]:
+            if globals.WEIGHT_TYPE is float and isclose(dist[v][1], dist[v][0], abs_tol=1e-9):
+                continue
+
             dist[v][0] = dist[v][1]
-            dist[v][1] = inf
+            if globals.WEIGHT_TYPE is Decimal:
+                dist[v][1] = Decimal('Infinity')
+            else:
+                dist[v][1] = inf
             heapq.heappush(pq, (dist[v][0], v))
 
     while pq:
@@ -22,6 +31,8 @@ def dijkstra(graph: dict[int, dict[int, float]], neg_edges: set, dist: list, pq,
                 continue
             alt_dist = dist[u][0] + graph[u][v]
             if alt_dist < dist[v][0]:
+                if globals.WEIGHT_TYPE is float and isclose(alt_dist, dist[v][0], abs_tol=1e-9):
+                    continue
                 dist[v][0] = alt_dist
                 heapq.heappush(pq, (alt_dist, v))
 
@@ -30,7 +41,7 @@ def dijkstra(graph: dict[int, dict[int, float]], neg_edges: set, dist: list, pq,
     return dist
 
 
-def bellman_ford(graph : dict[int, dict[int, float]], neg_edges: set, dist: list, I_prime = None, anc_in_I = None, parent = None, save_source = False):
+def bellman_ford(graph, neg_edges: set, dist: list, I_prime = None, anc_in_I = None, parent = None, save_source = False):
 
     for (u,v) in neg_edges:
         alt_dist = dist[u][0] + graph[u][v]
@@ -55,23 +66,27 @@ def bfd_save_rounds(super_source, graph, neg_edges, dist: list, beta: int):
         rounds.append([dist[v][0] for v in range(len(graph))])
     return rounds
 
-def h_hop_sssp(source, graph: dict[int, dict[int, float]], neg_edges: set, h: int, I_prime=None, parent=None, anc_in_I=None, save_source=False):
-    dist = [[inf,inf] for _ in range(len(graph))]
-    dist[source][0] = 0
+def h_hop_sssp(source, graph, neg_edges: set, h: int, I_prime=None, parent=None, anc_in_I=None, save_source=False):
+    if globals.WEIGHT_TYPE is Decimal:
+        dist = [[Decimal('Infinity'),Decimal('Infinity')] for _ in range(len(graph))]
+        dist[source][0] = Decimal(0)
+    else:
+        dist = [[inf,inf] for _ in range(len(graph))]
+        dist[source][0] = 0
+        
     pq = []
     heapq.heappush(pq,(dist[source][0],source))
-
     dist = dijkstra(graph, neg_edges, dist, pq, I_prime, parent, anc_in_I, save_source)
     for _ in range(h):
         dist = bellman_ford(graph, neg_edges, dist, I_prime, parent, anc_in_I, save_source)
         dist = dijkstra(graph, neg_edges, dist, pq, I_prime, parent, anc_in_I, save_source)
     return [dist[v][0] for v in range(len(graph))]
 
-def h_hop_stsp(target, graph: dict[int, dict[int, float]], h: int):
+def h_hop_stsp(target, graph, h: int):
     t_graph, t_neg_edges = transpose_graph(graph)
     return h_hop_sssp(target, t_graph, t_neg_edges, h)
 
-def transpose_graph(graph: dict[int, dict[int, float]]):
+def transpose_graph(graph):
     t_graph = {}
     t_neg_edges = set()
 
@@ -105,6 +120,8 @@ def _subset_bfd(graph, neg_edges, subset, beta,I_prime=None,save_source=False):
     if save_source:
         for i in I_prime:
             if distances[i] < 0 and anc_in_I[i] == i:
+                if globals.WEIGHT_TYPE is float and isclose(distances[i], 0.0, abs_tol = 1e-9):
+                    continue
                 raise NegativeCycleError
     return distances
 
@@ -112,19 +129,24 @@ def subset_bfd(graph, neg_edges, subset, h: int, I_prime=None, save_source=False
     return _subset_bfd(graph, neg_edges, subset, h, I_prime, save_source)[:-1]
 
 
-def super_source_bfd(graph: dict[int, dict[int, float]], neg_edges: set, h: int, cycleDetection = False):
+def super_source_bfd(graph, neg_edges: set, h: int, cycleDetection = False):
     distances1 = _subset_bfd(graph, neg_edges, graph.keys(), h)
     if cycleDetection:
-        tent_dist = [[distance,inf] for distance in distances1]
+        if globals.WEIGHT_TYPE is Decimal:
+            tent_dist = [[distance,Decimal('Infinity')] for distance in distances1]
+        else:
+            tent_dist = [[distance,inf] for distance in distances1]
         tent_dist = bellman_ford(graph, neg_edges, tent_dist)
         tent_dist = dijkstra(graph, neg_edges, tent_dist, [])
         for v in graph.keys():
             if tent_dist[v][0] < distances1[v]:
+                if globals.WEIGHT_TYPE is float and isclose(tent_dist[v][0], distances1[v], abs_tol=1e-9):
+                    continue
                 raise NegativeCycleError
 
     return distances1[:-1]
 
-def get_set_of_neg_vertices(graph: dict[int, dict[int, float]]):
+def get_set_of_neg_vertices(graph):
     neg_vertices = set()
 
     for vertex, edges in graph.items():
@@ -148,13 +170,13 @@ def betweenness(source, target, graph, neg_edges, h: int):
     return len(find_betweenness_set(source, target, graph, neg_edges, h))
 
 
-def reweight_graph_and_composes_price_functions(graph: dict[int, dict[int, float]], new_price_function: list[int], with_transpose = False):
+def reweight_graph_and_composes_price_functions(graph, new_price_function: list[int], with_transpose = False):
     """
     Reweights the given graph with the provided new_price_function, and composes the new_price_function with existing
     precomputed price functions.
 
-    :param graph: the initial graphs, which needs to be reweighted (dict[int, dict[int, float]])
-    :param new_price_function: the price function which reweights the graph (list[int])
+    :param graph: the initial graphs, which needs to be reweighted
+    :param new_price_function: the price function which reweights the graph
     :param with_transpose: boolean flag deciding whether a transpose graph should be generated as well
 
     :return: the graph reweighted in new_price_function, a set of the negative edges, a set of the negative vertices,
@@ -178,7 +200,10 @@ def reweight_graph_and_composes_price_functions(graph: dict[int, dict[int, float
             new_graph_T[u] = {}
 
         for v, w in edges.items():
-            new_graph[u][v] = w + new_price_function[u] - new_price_function[v]
+            new_weight = w + new_price_function[u] - new_price_function[v]
+            if globals.WEIGHT_TYPE is float and isclose(new_weight, 0, abs_tol = 1e-9):
+                new_weight = 0
+            new_graph[u][v] = new_weight
 
             if with_transpose:
                 if v not in new_graph_T: new_graph_T[v] = {}
@@ -235,8 +260,12 @@ def super_source_bfd_save_rounds(graph, neg_edges, subset, h: int):
         if v != super_source:
             graph[super_source][v] = 0
 
-    dist = [[inf,inf] for _ in range(len(graph))]
-    dist[super_source][0] = 0
+    if globals.WEIGHT_TYPE is Decimal:
+        dist = [[Decimal('Infinity'),Decimal('Infinity')] for _ in range(len(graph))]
+        dist[super_source][0] = Decimal(0)
+    else:
+        dist = [[inf,inf] for _ in range(len(graph))]
+        dist[super_source][0] = 0
     dists = bfd_save_rounds(super_source, graph, neg_edges, dist, h)
     del graph[super_source]
     return [lst[:-1] for lst in dists]

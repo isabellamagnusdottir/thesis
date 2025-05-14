@@ -2,6 +2,7 @@ from math import ceil
 from collections import deque
 from src.fineman.helper_functions import get_set_of_neg_vertices, transpose_graph
 from src.utils.threshold_error import InvalidThresholdError
+import src.globals as globals
 
 SCALAR_FOR_THRESHOLD = 4
 
@@ -59,7 +60,7 @@ def ensure_max_degree(graph: dict[int, dict[int, float]], threshold: int):
             count += 1
 
 
-        graph[vertex] = {new_vertex1:0, new_vertex2:0}
+        graph[vertex] = {new_vertex1:globals.WEIGHT_TYPE(0), new_vertex2:globals.WEIGHT_TYPE(0)}
 
         # check whether new vertices violate the degree threshold
         if len(graph[new_vertex1]) > threshold:
